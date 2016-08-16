@@ -1,14 +1,20 @@
-
+==================================================================
 Sitar : Simulation Tool for Architectural Research (version 2.0)
+==================================================================
+
+Sitar is a framework for modeling cycle-based systems. 
+It consists of a system description language and a
+lightweight simulation kernel.  
 
 Authors: 
-	Neha V. Karanjkar (neha.karanjkar@gmail.com)
-	Madhav P. Desai (madhav@ee.iitb.ac.in)
-	April 2015
+	Neha V. Karanjkar <neha.karanjkar@gmail.com> IIT Bombay
+	Madhav P. Desai <madhav@ee.iitb.ac.in> IIT Bombay
+	August 2016
 	
 This folder contains:
 
-	INSTALL.txt	: installation instructions
+	INSTALL		: installation instructions
+	install.py	: installation script
 	documentation	: user manual and technical documentation
 	examples	: examples of sitar descriptions
 	core		: C++ code that forms the simulation kernel
@@ -18,12 +24,17 @@ This folder contains:
 	scripts		: script that forms the "sitar" command at the terminal
 	vim		: syntax highlighting support for vim editor
 
-
 Usage:
-	See INSTALL.txt for installtion instructions.
+	See INSTALL for installtion instructions.
 	After successful installation, try translating, compiling
 	and executing the sitar descriptions present in 
 	/examples folder.
 
 	Type "sitar -h" at the terminal for command options.
+
+
+License:
+	Sitar is provided with an MIT-license. See ./LICENSE
+	The sitar translator uses AntlrV3 (C-runtime).
+	For the AntlrV3 licence, see ./translator/antlr3Cruntime/libantlr3c-3.4/COPYING
 

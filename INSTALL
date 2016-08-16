@@ -1,13 +1,14 @@
-Installation instructions for Sitar
+=====================================
+Installation instructions
 =====================================
 
 PREREQUISITES:
 
-	Linux (Sitar was tested on Ubuntu 12:04)
+	Linux (tested on Ubuntu 12:04)
 	gcc >= version 4.5
 	python >= version 2.7
 	scons
-	openMp (optional) Required for parallel simulation.
+	OpenMP (optional) Required for parallel simulation.
 		
 
 INSTALLATION INSTRUCTIONS (FOR LINUX):
@@ -20,13 +21,12 @@ INSTALLATION INSTRUCTIONS (FOR LINUX):
 	STEP 2. Add the following lines to your ~/.bashrc file
 	   to use the sitar translator and compiler executables
 	   outside the installation folder. Replace <path> 
-	   with absolute path of sitarV2.0 folder
+	   with absolute path of this folder
 
 		#-------------------------
-		#sitarV2 paths:
+		#sitar paths:
 		export LD_LIBRARY_PATH=<path-to-sitar>/translator/antlr3Cruntime/build/lib:${LD_LIBRARY_PATH}
 		export PATH=<path-to-sitar>/scripts:${PATH}
-		alias antlrwors='java -jar <path-to-sitar>/translator/antlrworks-1.4.3.jar'
 		#-------------------------
 
 	STEP 3. Refer to /examples/README for running examples.
