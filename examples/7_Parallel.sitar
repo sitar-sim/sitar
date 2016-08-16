@@ -1,0 +1,59 @@
+//Parallel blocks
+
+module Top
+	submodule a : Parallel
+end module
+
+
+
+module Parallel
+behavior
+	$cout<<"\n time = "<<current_time;$;
+	
+	[
+		//first branch of the parallel block
+		do
+		 	wait(1,0);
+			$cout<<"\n in thread A at time "<<current_time;$;
+		while(1) end do;
+	|| 
+		//second branch of the parallel block
+		wait;
+		do
+		 	wait(1,0);
+			$cout<<"\n in thread B at time "<<current_time;$;
+		while(1) end do;
+	];
+end behavior
+end module
+
+
+module IterationLimit	
+//causes iteration limit to be exceeded in main execution loop.
+//In this example, module behavior does not converge within a cycle
+//and execution keeps alternating between two threads.
+
+behavior
+
+	decl $int a,b;$;
+	init $a=0;b=0;$;
+	[	do
+			 $cout<<"\nIn thread A at time "<<current_time;$;
+			 $a=1;$;
+			wait until(b==1);
+			 $a=0;$;
+			wait until(b==0);
+		while(1) end do;
+	||
+		do
+			 $cout<<"\nIn thread B at time "<<current_time;$;
+			wait until(a==1);
+			 $b=1;$;
+			wait until(a==0);
+			 $b=0;$;
+		while(1) end do;
+	];
+end behavior
+end module
+
+

@@ -1,0 +1,220 @@
+//testbench for core classes.
+//rename to .cpp and compile
+
+#include<iostream>
+#include<fstream>
+#include<cstdio>
+#include"sitar_token.h"
+#include"sitar_net.h"
+#include"sitar_inport.h"
+#include"sitar_time.h"
+#include"sitar_module.h"
+
+void test_net()
+{
+	
+	using namespace std;
+	using namespace sitar;
+	static const int width = 0;
+
+
+	token<width> buffer[4];	//create a buffer
+	net<width> n1;		//create a net object
+	n1.setBuffer(buffer,4); //assign a buffer to the net
+	inport<width> p1;	//create an inport
+	p1.setNet(&n1);		//connect inport to net
+	token<width> t;
+
+	cout<<"\n Token width ="<<t.width();
+	if(t.width()>0)
+	{
+	(t.data())[0]= 0x12;
+	cout<<"\n Token payload = 0x< ";
+	for(int i=0;i<(int)t.width();i++)
+		printf("%02x ",(t.data())[i]);
+	cout<<">";
+	}
+	
+	while(n1.push(t));
+	cout<<"\n capacity	"<<n1.capacity();
+	cout<<"\n numTokens	"<<n1.numTokens();
+	cout<<"\n remaining cap	"<<n1.remainingCapacity();
+	cout<<"\n _front 	"<<n1._front;
+	cout<<"\n _back		"<<n1._back;
+	cout<<"\n";
+	//prints 4,4,0,0,0
+
+	while(p1.pull(t));
+	cout<<"\n capacity	"<<n1.capacity();
+	cout<<"\n numTokens	"<<n1.numTokens();
+	cout<<"\n remaining cap	"<<n1.remainingCapacity();
+	cout<<"\n _front 	"<<n1._front;
+	cout<<"\n _back		"<<n1._back;
+	cout<<"\n";
+	//prints 4,0,4,0,0
+
+	n1.push(t);
+	n1.push(t);
+	n1.push(t);
+	n1.push(t);
+	p1.pull(t);
+	p1.pull(t);
+	p1.pull(t);
+
+	n1.push(t);
+	n1.push(t);
+	n1.push(t);
+	
+	cout<<"\n capacity	"<<n1.capacity();
+	cout<<"\n numTokens	"<<n1.numTokens();
+	cout<<"\n remaining cap	"<<n1.remainingCapacity();
+	cout<<"\n _front 	"<<n1._front;
+	cout<<"\n _back		"<<n1._back;
+	cout<<"\n";
+
+	//prints 4,4,0,3,3
+	while(p1.pull(t));
+	cout<<"\n capacity 	"<<n1.capacity();
+	cout<<"\n numTokens	"<<n1.numTokens();
+	cout<<"\n remaining cap	"<<n1.remainingCapacity();
+	cout<<"\n _front 	"<<n1._front;
+	cout<<"\n _back		"<<n1._back;
+	cout<<"\n";
+	//prints 4,0,4,3,3
+}
+
+void test_time()
+{
+	using std::cout;
+	using sitar::time;
+	
+	cout<<"\ncheck constructors";
+	time t0		;
+	time t1(1,1)	;
+	time t2(10)	;
+	time t3(11)	;
+	time t4(t3)	;
+	time t5,t6,t7,t8,t9,t10	;
+
+	cout<<"\n time t0	 "<<t0;
+	cout<<"\n time t1(1,1)   "<<t1;
+	cout<<"\n time t2(10)	 "<<t2;
+	cout<<"\n time t3(11)	 "<<t3;
+	cout<<"\n time t4(t3)	 "<<t4;
+	cout<<"\n time t5,t6,t7,t8,t9,t10	 "<<t5<<t6<<t7<<t8<<t9<<t10;
+
+	cout<<"\ncheck toString, toUint64, cycle, phase and <<";
+	cout<<"\n t1 = "<<t1<<" t1.cycle = "<<t1.cycle()<<" t1.phase = "<<t1.phase()<<" uint value = "<<t1.toUint64()<<" string value = "<<t1.toString();
+
+
+	cout<<"\ncheck assignment";
+	t1 =  time(1,1)   ; cout<<"\n t1 =  time(1,1)   "<<	t1;
+	t2 += time(1,1)   ; cout<<"\n t2 += time(1,1)   "<<	t2;
+	t3 -= time(0,1)   ; cout<<"\n t3 -= time(0,1)   "<<	t3;
+	
+	
+	
+	
+	
+	cout<<"\ncheck increment/decrement ";
+	
+	t3 =  t1+t2	  ; cout<<"\n t3 = t1+t2 "<<	t3;
+	t4 =  t2-t1       ; cout<<"\n t4 = t2-t1 "<<	t4;
+	t3 = ++t1         ; cout<<"\n t3 = ++t1  "<<	t3;
+	t1 = t1           ; cout<<"\n t1 = t1    "<<	t1;
+	t3 = t1++         ; cout<<"\n t3 = t1++  "<<	t3;
+	t1 = t1           ; cout<<"\n t1 = t1    "<<	t1;
+	t3 = --t1         ; cout<<"\n t3 = --t1  "<<	t3;
+	t1 = t1           ; cout<<"\n t1 = t1    "<<	t1;
+	t3 = t1--         ; cout<<"\n t3 = t1--  "<<	t3;
+	t1 = t1           ; cout<<"\n t1 = t1    "<<	t1;
+	
+	
+	
+
+	cout<<"\ncheck comparison";
+	cout<<"\n t1 =  time (1,1)   "<<	t1;
+	cout<<"\n t2 =  time(10,0)   "<<	t2;
+	cout<<"\n t1==t2 "<<(t1==t2);
+	cout<<"\n t1!=t2 "<<(t1!=t2);
+	cout<<"\n t1<t2  "<<(t1<t2 );
+	cout<<"\n t1>t2  "<<(t1>t2 ); 	
+	cout<<"\n t1<=t2 "<<(t1<=t2);		
+	cout<<"\n t1>=t2 "<<(t1>=t2);
+
+
+}
+
+//test module
+void test_module()
+{
+	using namespace std;
+	using namespace sitar;
+
+	static const unsigned int W =2;
+
+	module m1	; m1.setInstanceId("m1"); m1._type="type_m";
+	module m2	; m2.setInstanceId("m2"); m2._type="type_m";
+	
+	token<W> n1_buffer[10]; 
+	net<W> n1; 
+	n1.setInstanceId("n1"); 
+	n1.setBuffer(n1_buffer,10);
+
+	inport<W> p1	; 
+	p1.setInstanceId("p1"); 
+	p1.setNet(&n1);
+
+
+	
+	m1.addSubmodule(&m2,"m2");
+	m1.addInport(&p1,"p1");
+	m1.addNet(&n1,"n1");
+	m1.setHierarchicalId("");
+
+	cout<<"\n\n";
+	cout<<m1.getInfo();
+	cout<<m2.getInfo();
+	cout<<"\n\n";
+}
+
+//test logging
+void test_logging()
+{
+	using namespace std;
+	using namespace sitar;
+
+	module m1	; m1.setInstanceId("m1"); m1._type="type_m";
+	module m2	; m2.setInstanceId("m2"); m2._type="type_m";
+	
+	m1.addSubmodule(&m2,"m2");
+	m1.setHierarchicalId("");
+
+	std::ofstream logfile;
+	logfile.open ("test.txt");
+	logfile<<" Hello world from "<<m1.hierarchicalId();
+	m1.log.setLogstream(&logfile);
+	m2.log.setLogstream(&std::cerr);
+
+	cout<<"\n\n";
+	cout<<m1.getInfo();
+	cout<<m2.getInfo();
+	cout<<"\n\n";
+
+	logfile.close();
+}
+
+
+int main()
+{
+	using namespace std;
+	using namespace sitar;
+	cout<<"\n\n";
+	//test_net();
+	//test_time();
+	//test_module();
+	test_logging();
+	cout<<"\n\n";
+	return 0;
+}
+

@@ -1,0 +1,39 @@
+# Compile antlr-generated lexer and parser and 
+# the C++ wrapper around it to generate an
+# executable for the SiTAR translator.
+
+
+env = Environment(CC='g++')
+#env.Append(CCFLAGS =  '-m32')  # create a 32bit executable
+#env.Append(CCFLAGS =  '-pthread')
+env.Append(CCFLAGS =  '-g')
+#env.Append(CCFLAGS =  '-static')
+#env.Append(CCFLAGS =  '-D SITAR_ENABLE_TRACING')
+#linker flags
+#env.Append(LINKFLAGS =  '-m32')
+#env.Append(LINKFLAGS =  '-static')
+
+
+
+env.Program(
+	#executable name
+	target='sitar_translator',
+	
+	#Source files
+	source=[
+		Glob('./*.cpp'),
+		Glob('./*.c'),
+		Glob('./antlr_generated/*.cpp'),
+		Glob('./antlr_generated/*.c')
+		],
+	#paths to header files
+	CPPPATH=['./',
+		'./antlr_generated/',
+		'../antlr3Cruntime/build/include/'],
+	#libraries to link with 
+	LIBS=['antlr3c'],
+	LIBPATH=['../antlr3Cruntime/build/lib/']
+		)
+
+                
+      

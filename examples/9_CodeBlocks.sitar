@@ -1,0 +1,27 @@
+//Various ways in which C++ code can be embedded into 
+//a module/prodecure description
+
+module Top
+	submodule a : CodeBlocks 
+end module
+
+
+//various ways of C++ code embedding
+module CodeBlocks
+	decl $int x,y,z;$ //goes into class body (private data members of class)
+	init $x=10;y=20;$ //goes into constructor
+	include $#include<iostream>$ //goes into header section
+
+behavior 
+
+	nothing;
+	decl $int a;$;
+	init $z=30;$;
+	$cout<<"\n"<<x<<y<<z;$; //becomes a behavioral statement
+	nothing;
+	do nothing while($(1==2)$) end do; //expression between dollar signs gets copied as-is in the translated C++ code
+end behavior
+end module
+
+
+

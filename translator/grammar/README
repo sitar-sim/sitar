@@ -1,0 +1,15 @@
+sitar.g is the antlr grammar for the  input system description
+
+output_template.g is the antlr grammar for a string-template like thing to generate C++ code after parsing the system description
+
+
+Note: The antlr grammar sitar.g has been converted into ebnf and railroad-diagram notation automatically using an online tool written by
+Gunther Rademache available at:
+
+http://bottlecaps.de/convert/
+http://bottlecaps.de/rr/ui
+
+ORIGINAL antlr notation	: sitar.g
+EBNF			: sitar_ebnf_syntax.txt
+RAILROAD		: sitar_syntax_diagram.xhtml
+

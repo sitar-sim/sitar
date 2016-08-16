@@ -1,0 +1,51 @@
+//Tokens : packets of information for
+//communication between modules
+
+module Top
+	submodule system :  System
+end module
+
+module System
+	submodule a,b : SendRecieve
+	net n1,n2 : capacity 2
+	
+	//connect ports to net
+	a.op=>n1 b.ip<=n1 
+	b.op=>n2 a.ip<=n2
+end module
+
+module SendRecieve
+	inport  ip
+	outport op
+	decl $token<> t; int count;$
+	
+	behavior
+	do
+		//receive as many tokens 
+		//as possible in phase 0
+		wait until (this_phase==0);
+		$
+		count =0;
+		while(ip.pull(t)) count++;
+		if(count>0)
+		{
+			cout<<"\n"<<ip.hierarchicalId();
+			cout<<" pulled "<<count<<" tokens at time ";
+			cout<<current_time;
+		}$;
+
+		//send a token in phase 1
+		wait until (this_phase==1);
+		$
+		count =0;
+		while(op.push(t)) count ++;
+		if(count >0)
+		{
+			cout<<"\n"<<op.hierarchicalId();
+			cout<<" pushed " <<count<<" tokens at time ";
+			cout<<current_time;
+		}$;
+	while(1) end do;
+	end behavior
+end module
+

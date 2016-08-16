@@ -1,0 +1,39 @@
+
+module Top
+	submodule a : DoWhile 
+end module
+
+module DoWhile
+	decl $int x;$
+	init $x=1;$
+behavior
+	do
+		$cout<<"\n waiting "<<x<<" cycles ...";$;
+		wait(x,0);
+		$cout<<"\t time is "<<current_time;$;
+		$x+=1;$; 
+	while(x<=10) end do;
+	stop simulation;
+end behavior
+end module
+
+
+//there is a zero delay branch in the do-while loop.
+//this example whould give a 
+//"iterations exceeded in do-while loop" error.
+module DoWhileIterationLimit	
+behavior
+
+	[
+	do
+		$cout<<"\n in Loop";$;
+	while(1) end do;
+	||
+		wait(2,0);
+		stop simulation;
+	];
+
+end behavior
+end module
+
+

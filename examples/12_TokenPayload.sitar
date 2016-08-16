@@ -1,0 +1,84 @@
+
+module Top
+	submodule a : A
+	submodule b : B
+	
+	net n1 : capacity 1 width 1
+	net n2 : capacity 1 width 4
+	
+	a.outp=>n1   b.inp<=n1
+	b.outp=>n2   a.inp<=n2
+behavior
+	$cout<<"\nRunning module "<<hierarchicalId();$;
+end behavior
+end module
+
+
+
+module A
+	inport  inp  : width 4
+	outport outp : width 1
+	
+	decl $token<1> t; token<4> t2;$
+	include $#include<cstring>$
+behavior	
+	
+	do
+	//try to output as many tokens
+	//as possible
+	wait until(this_phase==1);
+	$
+	*t.data()=(uint8_t)56;
+	while(outp.push(t));
+	$;
+
+	//try to input as many tokens as possible
+	wait until(this_phase==0);
+	$
+	while(inp.pull(t2))
+	{
+		float f;
+		memcpy(&f, t2.data(),4);
+		cout<<"\n"<<hierarchicalId()<<" pulled a token "<<t2.info()<<" which has float value "<<f;
+	}
+	$;
+	while(this_cycle<20) end do;
+end behavior
+end module
+
+
+
+
+module B
+	inport  inp  : width 1
+	outport outp : width 4
+	
+	decl $token<1> t; token<4> t2;$
+	include $#include<cstring>$
+behavior
+	
+	do
+	//try to putput as many tokens
+	//as possible
+	wait until(this_phase==1);
+	$
+	float f = 1.234;
+	memcpy(t2.data(), &f,4);
+	while(outp.push(t2));
+	$;
+
+	//try to input as many tokens as possible
+	wait until(this_phase==0);
+	$
+	while(inp.pull(t))
+	{
+		int a = *t.data();
+		cout<<"\n"<<hierarchicalId()<<" pulled a token "<<t.info()<<" of value "<<a;
+	}
+	$;
+	while(this_cycle<20) end do;
+
+end behavior
+
+end module
+

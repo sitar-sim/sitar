@@ -1,0 +1,35 @@
+//If-else block
+
+module Top
+	submodule a : IfElse 
+end module
+
+module IfElse
+	
+	behavior
+	decl $int count;$;
+	init $count=0;$;
+	do
+		$cout<<"\ncount = "<<count<<" ";$;
+		if(count%2==0) then
+			wait(2,0);
+			$cout<<"Even at time="<<current_time;$;
+		else
+			wait(1,0);
+			$cout<<"Odd  at time="<<current_time;$;
+		end if;
+		
+		if (count==5) then
+			$cout<<" Count reached 5 at time= "<<current_time;$;
+			stop simulation;
+			wait;
+		end if;
+		
+		$count=count+1;$;
+	
+	while(count<10) end do;
+	end behavior
+end module
+
+
+

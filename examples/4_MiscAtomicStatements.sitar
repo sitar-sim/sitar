@@ -1,0 +1,56 @@
+
+module Top
+	submodule a : MiscAtomicStatements 
+	submodule b : StopSimulation
+end module
+
+
+module MiscAtomicStatements
+	behavior
+		
+	//Embedded C++ : this goes into the header section
+	include $#include<iostream>$; 
+
+	//Embedded C++ : declarations become members of module class
+	decl $inline void foo(){std::cout<<"\nfoo";}$;
+	decl $int x ; inline int bar(){ std::cout<<"\nbar";return 42;}$;
+
+	//Embedded C++ : contents of init block go into 
+	//the contructor of the module class
+	init $x=0;$;
+
+	nothing; //do nothing
+	
+	wait (10,0); //wait statement
+
+	//C++ code block: executed as an instantaneous 
+	//behavioral statement
+	$
+	cout<<"\n"<<current_time;
+	foo();
+	x = x+bar();
+	cout<<"\nx = "<<x;
+	$;
+
+	wait(5,0);
+
+	stop behavior; //terminate the behavior of this module only
+	
+	wait;
+	$cout<<"\nThis statement should never be executed";$;
+
+end behavior
+end module
+
+
+module StopSimulation
+behavior
+	wait(20,0);
+	stop simulation; //terminate simulation
+	wait;
+	$cout<<"\nThis statement should never be executed";$;
+end behavior
+end module
+
+
+

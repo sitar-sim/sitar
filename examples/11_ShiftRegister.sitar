@@ -1,0 +1,117 @@
+//A Shift register consists of a
+//producer, connected to a consumer through 
+//an array of shift register stages.
+//The number of stages and delay of 
+//each stage are parameters
+
+module Top
+	submodule S : ShiftRegister<3,2> 
+	//Instantiate a shift register with <num_stages=3,delay=2>
+end module
+
+module ShiftRegister 
+	parameter int N = 1     //number of stages
+	parameter int DELAY = 1 //delay of each stage
+	
+	submodule p : Producer
+	submodule c : Consumer
+	submodule_array stage[N]  : Stage<DELAY>
+	net_array n[N+1] : capacity 1
+
+	//make connections
+	for i in 0 to (N - 1)
+		stage[i].ip <= n[i]
+		stage[i].op => n[i+1]
+	end for
+	p.op => n[0]
+	c.ip <= n[N]
+end module
+		
+module Stage
+	parameter 	int 	DELAY = 1  //delay of each stage
+	inport 		ip 	
+	outport 	op	
+	decl $token<> t; bool done_pull; bool done_push;$
+behavior
+	do
+		//pull a token
+		$done_pull=0;$;
+		do
+			wait until (this_phase==0);
+			$done_pull=ip.pull(t);$;
+			if(not done_pull) then wait end if;
+		while(not done_pull) end do;
+		$
+		{
+		cout<<"\n"<<std::setw(12)<<hierarchicalId();
+		cout<<"\t pulled a token with ID "<<t.ID;
+		cout<<" at time "<<current_time;
+		}$;
+
+		wait(DELAY,0);
+
+		$done_push=0;$;
+		do
+			wait until (this_phase==1);
+			$done_push=op.push(t);$;
+			if(not done_push) then wait end if;
+		while(not done_push) end do;
+		$
+		{
+		cout<<"\n"<<std::setw(12)<<hierarchicalId();
+		cout<<"\t pushed a token with ID "<<t.ID;
+		cout<<" at time "<<current_time;
+		}$;
+	while(1) end do;
+end behavior
+end module
+
+module Producer
+	outport op 
+	decl $token<> t; int count;$
+	decl $static const int num_tokens=5;$ //total number of tokens produced
+behavior 
+	init$ count=0;$;
+	do
+		wait until (this_phase==1);
+		//try to output as many tokens as possible
+		$
+		t.ID=count;
+		while(op.push(t))
+		{
+			cout<<"\n"<<std::setw(12)<<hierarchicalId();
+			cout<<"\t pushed a token with ID "<<t.ID;
+			cout<<" at time "<<current_time;
+			count ++;
+			t.ID=count;
+			if(count>=num_tokens) break;
+		}
+		$;
+		wait;
+	while (count<num_tokens) end do;
+end behavior
+end module
+
+module Consumer
+	inport ip 
+	decl $token<> t; int count;$
+behavior 
+	init$ count=0;$;
+	do
+		wait until (this_phase==0);
+		//try to pull as many tokens as possible
+		
+		$
+		while(ip.pull(t))
+		{
+			cout<<"\n"<<std::setw(12)<<hierarchicalId();
+			cout<<"\t pulled a token with ID "<<t.ID;
+			cout<<" at time "<<current_time;
+			count ++;
+		}
+		$;
+		wait;
+	while (1) end do;
+end behavior
+end module
+

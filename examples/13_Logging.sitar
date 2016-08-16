@@ -1,0 +1,105 @@
+//Examples of logging support
+
+module Top
+	submodule a : Foo
+	submodule b : Bar
+	submodule c : Baz
+end module
+
+
+module Foo
+
+behavior
+	//basic log statement.
+	//logging can only be done from within a code block statement
+	$
+	log<<endl<<"Hello world ";
+	log<<endl<<"Current time is "<<current_time;
+	$;
+
+	//Compile-time control :
+	//	logging can be enabled/disabled at compile time using the macro SITAR_ENABLE_LOGIN
+	//	logging is enabled if this macro is defined during compilation.
+	//
+	//Run-time control :
+	//	logging can be turned ON/OFF for a module at runtime by calling 
+	//	log.turnON()/log.turnOFF() methods.
+	//	It is ON by default. 
+	
+
+	$
+	log.turnOFF();
+	log<<endl<<"This should NOT be printed ";
+	log.turnON();
+	log<<endl<<"This SHOULD get printed ";
+	$;
+	
+	
+	//Each time a module inserts endl into the log,
+	//the new line contains a prefix, 
+	//which is the name of the module by default.
+	//this prefix can be changed by calling  log.setPrefix() method.
+	
+	$
+	log.useDefaultPrefix=false;
+	log.setPrefix("---FOO---:");
+	log<<endl<<"We have changed the logger prefix henceforth to FOO for module "<<hierarchicalId();
+	log<<endl<<"Hello world again ";
+	log<<"\n"<<"NOTE - This is what happens if we use \\n instead of endl...no prefix";
+	$;
+
+	wait;
+
+	//try logging token information
+	$
+	token<> t;
+	token<1> t1;
+	t1.data()[0]=0x12;
+	log<<endl<<"t="<<t.info();
+	log<<endl<<"t1="<<t1.info();
+	$;
+
+
+end behavior
+end module
+
+
+
+module Bar
+behavior
+	//another module writing to the default stream
+	$
+	log<<endl<<"Hello world from "<<hierarchicalId()<<endl;
+	$;
+end behavior
+end module
+
+module Baz
+behavior
+	//Output of a logger can be sent to an arbitrary std::ostream.
+	//By default, all modules output to a default stream object 
+	//called logger::defaultLogstream() 
+
+	//Lets send the log output of this module to std::cout :
+	$
+	log.setOstream(&std::cout);
+	log<<endl<<" Hello World from module "<<hierarchicalId();
+	$;
+
+	//a module can have any number of additional loggers.
+	decl $logger log2,log3;$;
+	
+	$
+	log2.setPrefix("LOG2            :");
+	log3.setPrefix("LOG3            :");
+	log2.setOstream(&std::cout);
+	log2<<endl<<" What ho log2";
+	$;
+
+	//the additional loggers can be set to the 
+	//default file stream as follows:
+	$
+	log3.setOstream(&logger::defaultLogstream());
+	$
+end behavior
+end module

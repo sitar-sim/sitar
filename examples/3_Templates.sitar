@@ -1,0 +1,23 @@
+//Templates
+
+module Top
+	submodule a : Templatized<>
+	submodule b : Templatized<1,'b'>
+	submodule c : Templatized<2,'c'>
+end module
+
+
+module Templatized
+	parameter int x = 0
+	parameter char c = 'a'
+	
+	behavior
+	wait(x,0);
+	$
+	cout<<"\n In module "<<instanceId();
+	cout<<" at time"<<current_time;
+	cout<<"\n x = "<<x<<"\t char = "<<c;
+	$;
+	end behavior
+end module
+

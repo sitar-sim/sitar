@@ -1,0 +1,5 @@
+*.o
+*.swp
+*.dblite
+log.txt
+

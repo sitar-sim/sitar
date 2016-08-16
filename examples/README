@@ -1,0 +1,18 @@
+This folder contains simple examples of sitar descriptions.
+Each example illustrates a construct in the language.
+
+
+For each description, a user has to first translate
+the sitar description into C++ code, and then compile 
+the code along with sitar core classes to obtain 
+a simulation executable.
+
+For running 0_HelloWorld.sitar example:
+
+	$ sitar translate 0_HelloWorld.sitar
+	$ sitar compile
+	$ ./sitar_sim
+
+type $ sitar translate -h for detailed information on translation options
+and  $ sitar compile   -h for detailed information on compilation options.
+

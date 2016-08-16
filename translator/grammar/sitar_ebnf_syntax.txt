@@ -1,0 +1,242 @@
+/* converted on Sat Oct 31, 2015, 20:08 (UTC+05:30) by antlr_3-to-w3c v0.35.1152 which is Copyright (c) 2011-2015 by Gunther Rademacher <grd@gmx.net> */
+
+top      ::= design_unit+ EOF
+design_unit
+         ::= du
+du       ::= module_definition
+           | procedure_definition
+module_definition
+         ::= 'module' IDENTIFIER module_body 'end' 'module'
+procedure_definition
+         ::= 'procedure' IDENTIFIER procedure_body 'end' 'procedure'
+module_body
+         ::= parameter_declaration_region? ( code_block_regions | structural_component_declaration | procedure_declaration )* ( behavior_block code_block_regions* )?
+procedure_body
+         ::= parameter_declaration_region? ( code_block_regions | procedure_declaration )* ( behavior_block code_block_regions* )?
+code_block_regions
+         ::= include_block
+           | declaration_block
+           | initialization_block
+include_block
+         ::= 'include' code_block_with_info
+declaration_block
+         ::= 'decl' code_block_with_info
+initialization_block
+         ::= 'init' code_block_with_info
+structural_component_declaration
+         ::= port_declaration
+           | net_declaration
+           | submodule_declaration
+           | connection
+parameter_declaration_region
+         ::= ( parameter_declaration ';'? )+
+parameter_declaration
+         ::= 'parameter' param_type IDENTIFIER '=' default_value
+param_type
+         ::= 'int'
+           | 'bool'
+           | 'char'
+default_value
+         ::= integer
+           | BOOL
+           | CHAR
+integer  ::= '-'? INTEGER
+port_declaration
+         ::= inport_declaration
+           | inport_array_declaration
+           | outport_declaration
+           | outport_array_declaration
+inport_declaration
+         ::= 'inport' IDENTIFIER ( ',' IDENTIFIER )* ( ':' 'width' expression )?
+inport_array_declaration
+         ::= 'inport_array' IDENTIFIER '[' expression ']' ( '[' expression ']' )? ( ':' 'width' expression )?
+outport_declaration
+         ::= 'outport' IDENTIFIER ( ',' IDENTIFIER )* ( ':' 'width' expression )?
+outport_array_declaration
+         ::= 'outport_array' IDENTIFIER '[' expression ']' ( '[' expression ']' )? ( ':' 'width' expression )?
+net_declaration
+         ::= simple_net_declaration
+           | net_array_declaration
+simple_net_declaration
+         ::= 'net' IDENTIFIER ( ',' IDENTIFIER )* ':' 'capacity' expression ( 'width' expression )?
+net_array_declaration
+         ::= 'net_array' IDENTIFIER '[' expression ']' ( '[' expression ']' )? ':' 'capacity' expression ( 'width' expression )?
+submodule_declaration
+         ::= simple_submodule_declaration
+           | submodule_array_declaration
+simple_submodule_declaration
+         ::= 'submodule' IDENTIFIER ( ',' IDENTIFIER )* ':' IDENTIFIER ( '<' template_arguments? '>' )?
+template_arguments
+         ::= argument ( ',' argument )*
+argument ::= BOOL
+           | CHAR
+           | STRING
+           | expression
+submodule_array_declaration
+         ::= 'submodule_array' IDENTIFIER '[' expression ']' ( '[' expression ']' )? ':' IDENTIFIER ( '<' template_arguments? '>' )?
+procedure_declaration
+         ::= 'procedure' IDENTIFIER ( ',' IDENTIFIER )* ':' IDENTIFIER ( '<' template_arguments? '>' )?
+connection
+         ::= simple_connect_statement
+           | for_loop_for_connections
+simple_connect_statement
+         ::= port_instance_name ( ',' port_instance_name )* ( '<=' | '=>' ) net_instance_name
+port_instance_name
+         ::= hierarchical_instance_name
+net_instance_name
+         ::= hierarchical_instance_name
+hierarchical_instance_name
+         ::= object_name ( ( '.' | '::' | '->' ) object_name )*
+object_name
+         ::= IDENTIFIER ( '[' expression ']' ( '[' expression ']' )? )?
+for_loop_for_connections
+         ::= 'for' IDENTIFIER 'in' expression 'to' expression connection+ 'end' 'for'
+expression
+         ::= term ( ( '+' | '-' ) term )*
+term     ::= signed_expression ( ( '*' | '/' | '%' ) signed_expression )*
+signed_expression
+         ::= '-'? atomic_expression
+atomic_expression
+         ::= '(' expression ')'
+           | INTEGER
+           | IDENTIFIER
+behavior_block
+         ::= cf
+cf       ::= 'behavior' sequence 'end' 'behavior'
+sequence ::= statement ( ';' statement )* ';'?
+           | '(' statement ( ';' statement )* ';'? ')'
+statement
+         ::= atomic_statement
+           | compound_statement
+atomic_statement
+         ::= nothing_statement
+           | wait_statement
+           | stop_statement
+           | run_procedure_statement
+           | code_block_statement
+code_block_statement
+         ::= behavior_code_block_statement
+           | declaration_block_statement
+           | initialization_block_statement
+           | includes_block_statement
+behavior_code_block_statement
+         ::= code_block_with_info
+declaration_block_statement
+         ::= 'decl' code_block_with_info
+initialization_block_statement
+         ::= 'init' code_block_with_info
+includes_block_statement
+         ::= 'include' code_block_with_info
+nothing_statement
+         ::= 'nothing'
+wait_statement
+         ::= wait_until
+           | wait_for_time
+           | single_wait
+wait_until
+         ::= 'wait' 'until' expression_cf
+wait_for_time
+         ::= 'wait' '(' expression_cf ',' expression_cf ')'
+single_wait
+         ::= 'wait'
+stop_statement
+         ::= stop_behavior
+           | stop_simulation
+stop_behavior
+         ::= 'stop' 'behavior'
+stop_simulation
+         ::= 'stop' 'simulation'
+run_procedure_statement
+         ::= 'run' IDENTIFIER
+compound_statement
+         ::= if_statement
+           | do_while_statement
+           | parallel_statement
+if_statement
+         ::= 'if' expression_cf 'then' sequence ( 'else' sequence )? 'end' 'if'
+do_while_statement
+         ::= 'do' sequence 'while' expression_cf 'end' 'do'
+parallel_statement
+         ::= '[' sequence ( '||' sequence )+ ']'
+expression_cf
+         ::= exp1 ( 'or' exp1 )*
+exp1     ::= exp2 ( 'and' exp2 )*
+exp2     ::= 'not'? exp3
+exp3     ::= exp4 ( comparison_operator exp4 )*
+exp4     ::= exp5 ( add_operator exp5 )*
+exp5     ::= exp6 ( mul_operator exp6 )*
+exp6     ::= '-'? atomic_expression_cf
+comparison_operator
+         ::= '=='
+           | '!='
+           | '>='
+           | '<='
+           | '<'
+           | '>'
+add_operator
+         ::= '+'
+           | '-'
+mul_operator
+         ::= '*'
+           | '/'
+           | '%'
+atomic_expression_cf
+         ::= '(' expression_cf ')'
+           | function_call
+           | this_cycle
+           | this_phase
+           | INTEGER
+           | STRING
+           | identifier
+           | expression_code_block
+expression_code_block
+         ::= code_block
+function_call
+         ::= identifier '(' argument_list? ')'
+argument_list
+         ::= expression_cf ( ',' expression_cf )*
+this_cycle
+         ::= 'this_cycle'
+this_phase
+         ::= 'this_phase'
+code_block_with_info
+         ::= code_block
+code_block
+         ::= CODE_BLOCK
+identifier
+         ::= IDENTIFIER ( ( '.' | '::' | '->' ) IDENTIFIER )*
+_        ::= WS
+           | COMMENT
+          /* ws: definition */
+
+<?TOKENS?>
+
+CODE_BLOCK?
+         ::= '$' .* '$'
+BOOL     ::= 'true'
+           | 'false'
+INTEGER  ::= [0-9]+
+STRING   ::= '"' ( ESC_SEQ | [^\"] )* '"'
+CHAR     ::= "'" ( ESC_SEQ | [^'\] ) "'"
+IDENTIFIER
+         ::= ( [a-z] | [A-Z] ) ( [a-z] | [A-Z] | [0-9] | '_' )*
+WS       ::= ' '
+           | #x9
+           | #xD
+           | #xA
+COMMENT? ::= '//' [^#xA#xD]* #xD? #xA
+           | '/*' .* '*/'
+HEX_DIGIT
+         ::= [0-9]
+           | [a-f]
+           | [A-F]
+ESC_SEQ  ::= '\' ( 'b' | 't' | 'n' | 'f' | 'r' | '"' | "'" | '\' )
+           | UNICODE_ESC
+           | OCTAL_ESC
+OCTAL_ESC
+         ::= '\' [0-3] [0-7] [0-7]
+           | '\' [0-7] [0-7]
+           | '\' [0-7]
+UNICODE_ESC
+         ::= '\' 'u' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT
+EOF      ::= $

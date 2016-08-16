@@ -1,0 +1,44 @@
+This folder contains the core classes in sitar.
+The main classes are as follows:
+
+	object 
+		Base class to all other classes (such as net, module, ports).
+		Has an instance id, a hierarchical id, and a pointer to the
+		parent module. 
+	
+	net
+		A net is a channel of communication
+		between modules. A net provides a fixed size
+		FIFO buffering for tokens (which are packets of 
+		information). Modules can push/pull
+		tokens from a net.
+
+
+	inort,outport
+		Interface between module and net
+
+	module
+		Behavioral entity in the system
+
+	time 
+		Time is cycle-based, each cycle
+		consists of two phases, phase 0 
+		and phase 1
+
+	token 
+		A token is a packet of information transfered 
+		from one module to another. Tokens have 
+		information fields such as sender, receiver and ID
+		in addition to a payload. Tokens have a parameter 'width'
+		which is the size of the payload in Bytes.
+
+
+Keywords (cannot be used as names for identifiers)
+	object
+	module
+	net
+	inport
+	outport
+	time
+	token
+	simulation

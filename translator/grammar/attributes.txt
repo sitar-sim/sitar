@@ -1,0 +1,33 @@
+
+
+//These attributes are used as an interface between this parser and code generator for each design unit
+	                        
+	
+	//design_unit_name
+	//is_module
+	//is_procedure
+
+
+	//has_parameters
+	//has_behavior (applicable for modules)
+	
+	//num_pointers
+	//num_timers
+	//num_if_flags
+       
+       /////information about input:  set through main.cpp once for each translation:
+	//TIME
+	//DATE
+	//OUTPUT_DIR
+	//INPUT_FILE
+	 
+	 ////////information about output file to be generated per design unit(procedure or module block)
+	//filename_h
+	//filename_cpp
+	//header_guard
+	//template_class
+	//template_member
+	//template_args
+
+	
+

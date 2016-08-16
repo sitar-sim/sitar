@@ -1,0 +1,158 @@
+	<@file(h)>
+	#ifndef <header_guard>
+	#define <header_guard>
+	//======================================
+	//file <filename_h>                                                  
+	//Describes <(is_module)module><!(is_module)procedure> <design_unit_name>                                      
+	//Auto-generated from input file "<INPUT_FILE>" on <DATE> at time <TIME>   
+	<(has_parameters) //(This design unit is parameterized. Generating code into a .h file only) >
+	<!(has_parameters)//(This design unit is not parameterized. Generating code into .h and .cpp files) >
+	//======================================
+	#include\<iostream\>
+	#include\<iomanip\>
+
+	//sitar core classes
+	#include"sitar_module.h"
+	#include"sitar_time.h"
+	//user included files
+	<@add(includes)>
+
+	namespace sitar{
+
+	<template_class>
+	class <design_unit_name>:public module
+	{
+
+		public:
+			//constructor
+			<design_unit_name>();
+	<(has_behavior) 
+			void runBehavior(const time& current_time);
+			inline void _incrementPointer(unsigned int ptr_number){_pointer[ptr_number]++; _reexecute=true;}
+			void _resetBehavior();
+
+			
+			//Auto-generated variables for recording state in behavior block
+			private:
+			static const unsigned int _num_pointers=<num_pointers>; //total pointers used by this module
+			static const unsigned int _num_timers=<num_timers>;  	//total timers used by this module
+			static const unsigned int _num_if_flags=<num_if_flags>; //total if_flags used
+			
+			//State holders 
+			//the +1 for array size is to avoid zero-sized arrays
+			unsigned int 	_pointer[_num_pointers+1];		//pointers for sequences
+			time 	_timer[_num_timers+1];			//timers for wait statements
+			bool		_if_flag[_num_if_flags+1];		//if_flags
+			unsigned int    _pointer_last_value[_num_pointers+1];	//last value taken by each sequence pointer
+
+	>
+			//other declarations
+			public:
+			<@add(declarations)>
+
+	};
+	}
+	//==========================================
+
+
+	<!(has_parameters) 
+
+	<@file(cpp)> 
+	//====================================================================
+	//file <filename_cpp>                                                 
+	//Describes <(is_module)module><!(is_module)procedure> <design_unit_name>                                      
+	//Auto-generated from input "<INPUT_FILE>" on <DATE> at time <TIME>   
+	//====================================================================
+	#include"<filename_h>"
+	#include\<iostream\>
+	#include\<iomanip\>
+	>
+	namespace sitar{
+	//Constructor
+	<template_member>
+	<design_unit_name><template_args>::<design_unit_name>()
+	{
+		using std::cout;
+		_type="<design_unit_name>";
+	<(has_behavior)
+		
+		//Initialize variables used by behavior block
+		for( int i=0;i\<int(_num_pointers);i++) _pointer[i]=0;
+		for( int i=0;i\<int(_num_timers  );i++)   _timer[i]=0;
+		for( int i=0;i\<int(_num_if_flags);i++) _if_flag[i]=0;
+		_terminated=0;
+		_reexecute=0;
+	>
+		<@add(constructor)>
+	}
+
+
+
+
+
+	<(has_behavior)
+
+	//runBehavior 
+	<template_member>
+	void  <design_unit_name><template_args>::runBehavior(const time& current_time)
+	{
+		(void)current_time; //shut up compiler warning if variable is unused
+		using std::cout;
+		using std::endl;
+		
+		if(_terminated==1) return;
+
+				
+		<(is_module)
+			_reexecute=1;
+			//any statement that moves the pointers will set the _reexecute flag
+			//execute module behavior till convergence:
+			for(int _sitar_iteration=1; (_sitar_iteration\<=SITAR_ITERATION_LIMIT and _reexecute==1);_sitar_iteration++)
+		>
+		{
+			//Execute behavior block till convergence
+			_reexecute=0;
+			
+			//Execute behavior block. Any statement that updates 
+			//pointers will set the _reexecute flag
+			<@add(behavior)>
+		
+		}
+
+		<(is_module)
+			//if iteration limit has exceeded, throw error and stop simulation 
+			if(_reexecute==1)
+			{
+			std::cerr\<\<"\nERROR:Iteration limit exceeded in behavior block of module <design_unit_name>.";
+			std::cerr\<\<"\nModule behavior did not converge within a phase .... stopping simulation";
+			stop_simulation();
+			}
+
+		>
+
+		//check if behavior has terminated. 
+		if(_pointer[0]==_pointer_last_value[0])
+		{
+			_terminated=true;
+		}
+		return;
+	}
+	
+	//resetBehavior 
+	<template_member>
+	void  <design_unit_name><template_args>::_resetBehavior()
+	{
+		//reset variables used by behavior block
+		for( int i=0;i\<int(_num_pointers);i++) _pointer[i]=0;
+		for( int i=0;i\<int(_num_timers  );i++)   _timer[i]=0;
+		for( int i=0;i\<int(_num_if_flags);i++) _if_flag[i]=0;
+		_terminated=0;
+		_reexecute=0;
+	}
+
+
+	>
+	}
+
+	<@file(h)>		
+	#endif

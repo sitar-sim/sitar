@@ -1,0 +1,152 @@
+#! /usr/bin/python
+import sys, os, subprocess
+
+
+
+#-----------------------------------
+# SiTAR interface
+#-----------------------------------
+
+
+#Various paths
+current_dir = os.getcwd()			#script invoked from this directory
+script_pathname = os.path.dirname(sys.argv[0])        
+script_dir= os.path.abspath(script_pathname) 	#script is stored in this directory
+
+
+#get locations of translator and template relative to location of this script
+translator_location=script_dir+"/../translator/parser/sitar_translator"
+template_location  =script_dir+"/../translator/parser/GenerationTemplate.txt"
+sconstruct_location=script_dir+"/../compiler/SConstruct"
+main_cpp_location  =script_dir+"/../compiler/sitar_default_main.cpp"
+scons_config_file  =current_dir+"/sitar_scons_config.txt"
+
+
+
+
+def sitar_translate(args):
+	#check if the input file exists,
+	#otherwise abort
+	if not os.path.isfile(args.INPUT_FILE):
+		print "ERROR: File ",args.INPUT_FILE, "cannot be found"
+		print "Aborting translation."
+		print "Translation Failed"
+		sys.exit()
+
+	# get absolute path of OUTPUT_DIR
+	output_dir = os.path.abspath(args.OUTPUT_DIR)
+	print "Translating ", args.INPUT_FILE, "..."
+	print "-----------------"
+	# create output_dir if it doesn't already exist
+	if not os.path.exists(output_dir):
+		print "Created directory ", output_dir
+		os.makedirs(output_dir)
+	# run translator on input file
+	exit_code=subprocess.call([translator_location, args.INPUT_FILE, output_dir, template_location])
+	print "-----------------"
+	if (exit_code==True) :
+		print "Translation Failed"
+		sys.exit()
+	else:
+		print "Generated code in ", output_dir
+
+
+
+def sitar_compile(args):
+	print "Compiling ......"
+	print"----------------"
+
+	#write compilation options into a text file
+	print"Writing arguments to scons config file"
+	fo = open(scons_config_file, "w")
+	
+	#first line is the location of the installation directory
+	#1
+	main_cpp_location  =script_dir+"/../"
+	fo.write(main_cpp_location+"\n")
+	
+	#second line is the name of the TARGET
+	#2
+	fo.write(args.OUTPUT_FILE+"\n")
+	
+	#third line is the name of the cpp file containing main.cpp
+	#3
+	fo.write(args.MAIN_FILE+"\n")
+
+	#fourth line states whether openMp support is enabled
+	#4
+	fo.write(str(args.WITH_OPENMP)+"\n")
+
+	#fifth line states whether Logging is enabled
+	#5
+	fo.write(str(args.ENABLE_LOGGING)+"\n")
+
+	
+	#Next is a list of directories containing user code
+	if not args.CODE_DIR:
+		args.CODE_DIR=["./Output"]
+	#names of all directories to search for code
+	for item in args.CODE_DIR:
+		fo.write("%s\n" % item)
+	# Close opened file
+	fo.close()
+
+
+	
+	#call scons to do the compilation with a particular SConstruct file
+	exit_code=subprocess.call(["scons", "-f", sconstruct_location])
+	if not (exit_code==False) :
+		
+		print "\n============================================================"
+		print "FAILURE: Compilation failed"
+		print "============================================================\n"
+		sys.exit()
+	else:
+		print "\n============================================================"
+		print "SUCCESS: Generated Simulation Executable ", args.OUTPUT_FILE
+		print "============================================================\n"
+	
+
+#-----------------------------------------------------------
+# parsing command line arguments
+import argparse
+parser = argparse.ArgumentParser(description= "Sitar -Simulation Tool For Architectural Research Version 2.0")
+subparsers = parser.add_subparsers(dest="command_type", help='Commands. Type sitar <command> -h for help on each command')
+
+
+
+# translate command
+translate_parser = subparsers.add_parser('translate', help='Translate sitar description to C++ code')
+translate_parser.add_argument('INPUT_FILE', type=str, action='store', help="name of sitar file to be translated")
+
+translate_parser.add_argument("-o","--output", dest="OUTPUT_DIR", type=str, action='store', default="./Output",\
+				help="directory where translated code will be placed (default =./Output)")
+
+
+
+# compile command
+compile_parser = subparsers.add_parser('compile', help='Compile code to generate simulation executable')
+compile_parser.add_argument("-o", "--output", dest="OUTPUT_FILE", type=str, action='store', default="sitar_sim", help="name of the simulation executable to be created")
+compile_parser.add_argument("-d", "--directory", dest="CODE_DIR", type=str, action='append', help="directory containing code to be compiled")
+compile_parser.add_argument("-m", "--main_file", dest="MAIN_FILE", type=str, action='store', default=main_cpp_location, 
+help="Cpp file that instantiates the Top module and starts simulation (otherwise uses a default file <sitar folder>/Compiler/sitar_default_main.cpp)")
+
+compile_parser.add_argument('--openmp', dest="WITH_OPENMP", action='store_true', help="Compile with openMp support ")
+logging_group = compile_parser.add_mutually_exclusive_group()
+logging_group.add_argument('--logging',    dest="ENABLE_LOGGING", action='store_true', help="Enable logging (set by default)")
+logging_group.add_argument('--no-logging', dest="ENABLE_LOGGING", action='store_false', help="Disable logging ")
+compile_parser.set_defaults(ENABLE_LOGGING=True)
+
+
+
+args= parser.parse_args()
+if (args.command_type == "translate"):
+	sitar_translate(args)
+elif (args.command_type == "compile"):
+	sitar_compile(args)
+
+
+
+#-----------------------------------------------------------
+
+

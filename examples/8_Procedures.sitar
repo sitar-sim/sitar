@@ -1,0 +1,57 @@
+//Procedures
+
+module Top
+	submodule m :M
+end module
+
+module M
+	procedure p1 : Proc
+	procedure p2 : Proc
+	
+	behavior
+		do
+		[run p1 || wait; run p2;]
+		while(1) end do;
+	
+	end behavior
+end module
+
+procedure Proc
+	behavior
+	wait (10,0);
+	 $cout<<"\n procedure "<<hierarchicalId()<<" time = "<<current_time;$;
+	end behavior
+end procedure
+
+//Nested procedures
+//NOTE: nesting procedures is allowed but
+//recursive calls to procedures are not allowed
+
+module M2
+	procedure p1 : Proc_level1
+	behavior
+		do
+			run p1;
+		while(1) end do;
+	end behavior
+end module
+
+//A procedure that calls another procedure
+procedure Proc_level1
+	procedure p2 : Proc_level2<1>
+	behavior
+	wait (10,0);
+	 $cout<<"\n procedure "<<hierarchicalId()<<" time = "<<current_time;$;
+	run p2;
+	end behavior
+end procedure
+
+
+//this is a parameterized procedure
+procedure Proc_level2
+	parameter int x = 2
+	behavior
+	wait (10,0);
+	 $cout<<"\n procedure "<<hierarchicalId()<<" x = "<<x<<" time = "<<current_time;$;
+	end behavior
+end procedure

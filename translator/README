@@ -1,0 +1,37 @@
+This folder contains:
+	antlrworks-1.5.jar 	: antlr gui editor for viewing grammar
+	antlr3Cruntime		: installation folder for antlr3C runtime v3.4
+	grammar			: antlr grammar for sitar and output generationg template
+	parser			: antlr generated parser/lexer and wrapper code for using them
+
+
+The sitar translator has been created using antlrV3 tool(with C runtime).
+ (http://www.antlr3.org/download.html)
+ antlrworks version 1.4.3
+ C runtime version 3.4
+
+-----------------------------------------------
+To view/edit sitar grammar and translator:
+-----------------------------------------------
+
+	- install java (jdk version 6/7)
+	- launch antlrworks with command:
+	
+		java -jar antlrworks-1.5.jar 
+	
+	- open the grammar files 
+	 	./grammar/sitar.g 
+		or ./grammar/output_template.g
+
+	- in file->preferences->General,
+	set output path as ./parser and 
+	click Generate->Generate Code
+	to generate code for the lexer and parser.
+
+	-run scons in ./parser folder to
+	generate the translator executable
+
+	-To test the translator, run the 
+	translator on sitar descriptions in the
+	example folder.
+

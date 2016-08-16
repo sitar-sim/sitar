@@ -1,0 +1,64 @@
+
+//Stop statements are atomic statements that can be placed 
+//inside a module's behavior block. They are of two types:
+//
+// 'stop behavior'
+//	Stops behavior of current module and all its submodules 
+//	at the end of current phase.
+//	Any statements occuring after the 'stop behavior' in the next phase
+//	will not be executed. 
+//
+// 'stop simulation'
+//	Stops the entire simulation at the end of current phase.
+//	All modules are executed till convergence in the current phase.
+
+
+module Top
+	submodule a : A 
+	submodule b : B
+end module
+
+
+//Example of 'stop behavior'
+module A
+	submodule a_child : Child
+behavior
+	$cout<<"\n In module A at time "<<current_time;$;
+	wait(5,0);
+	stop behavior;
+	$cout<<"\n In module A, 'stop behavior' occured at time "<<current_time;$;
+	$cout<<"\n In module A, this should get executed because no time has elapsed since 'stop behavior' ";$;
+	wait;	
+	//the following statements are never executed.
+	$cout<<"\n This should not get executed ";$;
+	$cout<<"\n This should not get executed ";$;
+end behavior
+end module
+
+
+module Child
+behavior
+	do
+	$cout<<"\n In module "<<hierarchicalId()<<" at time "<<current_time;$;
+	wait(1,0);
+	while(1) end do;
+end behavior
+end module
+
+//Example of stop simulation
+module B
+	submodule b_child :Child
+behavior
+	$cout<<"\n In module B at time "<<current_time;$;
+	wait(15,0);
+	stop simulation;
+	$cout<<"\n In module B, 'stop simulation' occured at time "<<current_time;$;
+	$cout<<"\n In module B, this should get executed because no time has elapsed since 'stop simulation' ";$;
+	wait;	
+	
+	//the following statements are not executed,
+	//and simulation stops at the end of current phase.
+	$cout<<"\n This should not get executed ";$;
+	$cout<<"\n This should not get executed ";$;
+end behavior
+end module
