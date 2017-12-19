@@ -1,0 +1,29 @@
+//Car
+module Car
+	decl $unsigned int start_time;$
+	behavior
+ 		//wait until this car's start time
+		wait until(this_cycle>=start_time);
+
+		do
+			//start parking
+			$log<<"start parking and charging"<<endl;$;
+			wait(5,0);
+
+			//start driving
+			$log<<"start driving "<<endl;$;
+			wait(2,0);
+		while(1) end do;
+ 	end behavior
+end module
+
+//The environment
+module Top
+	submodule car_A, car_B : Car
+	init
+	$
+		car_A.start_time=1;
+		car_B.start_time=2;
+	$
+end module
+

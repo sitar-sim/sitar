@@ -525,7 +525,8 @@ procedure_body
 		
 		( parameter_declaration_region {$du::has_parameters=true;}        )?
 		( (code_block_regions | procedure_declaration )                   )*		
-		( behavior_block{$du::has_behavior=true;} (code_block_regions)*   )?
+		(behavior_block{$du::has_behavior=true;} )
+		(code_block_regions*   )
 	;
 
 
