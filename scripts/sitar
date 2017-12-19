@@ -80,6 +80,9 @@ def sitar_compile(args):
 	#fifth line states whether Logging is enabled
 	#5
 	fo.write(str(args.ENABLE_LOGGING)+"\n")
+        #sixth line specifies additional compilation flags
+	#6
+	fo.write(str(args.C_FLAGS)+"\n")
 
 	
 	#Next is a list of directories containing user code
@@ -130,6 +133,8 @@ compile_parser.add_argument("-o", "--output", dest="OUTPUT_FILE", type=str, acti
 compile_parser.add_argument("-d", "--directory", dest="CODE_DIR", type=str, action='append', help="directory containing code to be compiled")
 compile_parser.add_argument("-m", "--main_file", dest="MAIN_FILE", type=str, action='store', default=main_cpp_location, 
 help="Cpp file that instantiates the Top module and starts simulation (otherwise uses a default file <sitar folder>/Compiler/sitar_default_main.cpp)")
+compile_parser.add_argument('--cflags', dest="C_FLAGS", type=str, action='store', default="", help="Additional flags to be used for the compilation of the generated C++ code.")
+
 
 compile_parser.add_argument('--openmp', dest="WITH_OPENMP", action='store_true', help="Compile with openMp support ")
 logging_group = compile_parser.add_mutually_exclusive_group()

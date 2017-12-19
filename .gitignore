@@ -1,4 +1,6 @@
 *.o
+*.os
+*.a
 *.swp
 *.dblite
 log.txt

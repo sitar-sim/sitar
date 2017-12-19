@@ -45,7 +45,8 @@ if("True" in enable_logging):
 else:
 	COMPILE_WITH_LOGGING=False
 
-
+additional_flags=DIRS.pop(0)
+ADDITIONAL_FLAGS += additional_flags
 
 
 
@@ -125,6 +126,7 @@ if(COMPILE_TO_IGNORE_ASSERTIONS==True) :
 	#env.Append(CCFLAGS = '-Wno-unused-but-set-variable') 	
 	#env.Append(CCFLAGS = '-Wno-uninitialized') 	
 
+
 if(COMPILE_TO_SHARED_LIBRARY==True) :
 	env.Append(CCFLAGS =  '-fPIC')
 	env.Append(CCFLAGS =  '-DGENERATE_SHARED_LIBRARY_ONLY')
@@ -160,7 +162,7 @@ if(COMPILE_WITH_LOGGING==True) :
 
 
 
-if(COMPILE_TO_SHARED_LIBRARY==True) :
+if ("DGENERATE_SHARED_LIBRARY_ONLY" in additional_flags):
 	env.SharedLibrary(
 		#executable name
 		target=TARGET_NAME,
