@@ -43,27 +43,28 @@ int main(int argc, char* argv[])
 
 	
 	//print module hierarchy
-	std::cout<<"\n ===========================";
-	std::cout<<"\n printing system hierarchy:";
-	std::cout<<"\n ===========================";
-	std::cout<<TOP.getInfo();
+	//std::cout<<"\n ===========================";
+	//std::cout<<"\n printing system hierarchy:";
+	//std::cout<<"\n ===========================";
+	//std::cout<<TOP.getInfo();
 
 	
 	uint64_t simulation_cycles;
 	uint64_t default_simulation_cycles = 100;
 
 	//get simulation time from the command line
+	std::cout<<"\nRunning simulation...";
 	if(argc<2)
 	{
 		std::cout<<"\nSimulation time not specified";
 		std::cout<<"\n( usage: <simulation_executable> <simulation time in cycles> )";
-		std::cout<<"\nrunning simulation for "<<default_simulation_cycles<<" cycles";
+		std::cout<<"\nDefault maximum simulation time = "<<default_simulation_cycles<<" cycles";
 		simulation_cycles=default_simulation_cycles;
 	}
 	else
 	{
 		simulation_cycles=atoi(argv[1]);
-		std::cout<<"\nrunning simulation for "<<simulation_cycles<<" cycles";
+		std::cout<<"\nMaximum simulation time = "<<simulation_cycles<<" cycles";
 	};
 
 	std::cout<<"\n\n";
