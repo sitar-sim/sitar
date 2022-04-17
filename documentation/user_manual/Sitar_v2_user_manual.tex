@@ -481,7 +481,6 @@ connected to a net of width $W$.
                 end behavior
         end module
 
-
 	\end{verbatim}
 
 \section{Keywords}\label{sec:keywords}
@@ -543,7 +542,7 @@ The following is a list of keywords used by the language:
 	\section{Embedding C++ code}
 	Each module gets translated into a C++ class,
 	derived from a base class.
-	C++ code can be embedded at several places in the 
+	C++ code delimited by the dollar signs can be embedded at several places in the 
 	description using code blocks. Code blocks are of 4 
 	types, depending on where the user-code gets inserted in
 	the translated code:
@@ -558,25 +557,33 @@ The following is a list of keywords used by the language:
 	\end{enumerate}
 	Following example demonstrates code inclusion in a single module. 2 variables are declared, initialized,
 	and their value is modified and printed from within a behavior block:
-	\begin{verbatim}
-     module Foo
-            //include a header
-            $include  #include"my_header.h"   $endinclude
-            //declare and initialize variables
-            $decl     int a; float b;         $enddecl 
-            $init     a=0; b=0;               $endinit
+    \begin{verbatim}
+    //various ways of C++ code embedding
+    module CodeBlocks
+        decl $int x,y,z;$ 
+        //goes into class body (private data members of class)
+        
+        init $x=10;y=20;$ 
+        //goes into module class' constructor
+        
+        include $#include<iostream>$ 
+        //goes into header section
 
-            behavior 
-                 $code 
-                   a=1; b=3.142;  
-                 $endcode;
-                 wait(10,0);
-                 $code 
-                   std::cout<<"\n a ="<<a;
-                   std::cout<<" and b ="<<b;    
-                 $endcode;
-          end behavior
-     end module
+    behavior 
+
+        nothing;
+        decl $int a;$; 
+        //include, decl and init blocks can also be placed 
+        //inside the behavior block
+        init $z=30;$;
+        $cout<<"\n"<<x<<y<<z;$; //becomes a behavioral statement
+        nothing;
+        do nothing while($(1==2)$) end do; 
+        //expression between dollar signs gets copied 
+        //as-is in the translated C++ code
+    end behavior
+    end module
+
      \end{verbatim}
 
 
@@ -653,9 +660,9 @@ The following is a list of keywords used by the language:
 	Following is the syntax and behavior of each type of statement:\\
 
 	\subsection{Code block statement}
-		\texttt{\$code}\\
+		\texttt{\$}\\
 		\textit{C++ statements}\\
-		\texttt{\$endcode}\\
+		\texttt{\$}\\
 
 	The C++ code contained inside the code delimiters is executed 
 	as a single behavior block statement, and finishes instantaneously.
@@ -748,9 +755,9 @@ The following is a list of keywords used by the language:
 	behavior 
 		wait(1,0);
 		stop module;
-		$code std::cout<<"\nHello"; $endcode;
+		$std::cout<<"\nHello";$ ;
 		wait(0,1);
-		$code std::cout<<" World"; $endcode;
+		$std::cout<<" World"; $ ;
 	end behavior
 	\end{verbatim}
 	This behavior will cause \texttt{Hello} to be printed before simulation
@@ -911,7 +918,7 @@ The following is a list of keywords used by the language:
 
          behavior 
              wait (2,0);
-             $code std::cout<<"\nHello World"; $endcode;
+             $std::cout<<"\nHello World";$ ;
              a=3;
          end behavior
  end procedure
@@ -973,9 +980,12 @@ module A
         behavior 
                 ... behavioral statements...;
                 //modify local variables of f1
-                $code f1.a=10; $endcode
+                
+				$f1.a=10; $;
+
                 run f1;
-                ...
+                
+				...
                 //read local variables of f1
                 if(f1.a==0) then ... end if;
                 ...
@@ -1002,10 +1012,10 @@ end module
 
 procedure Foo for module A
         behavior 
-                $code 
+                $ 
                 //access data-member of parent:
                 parent->a=10;
-                $endcode;
+                $;
         end behavior
 end procedure
 
