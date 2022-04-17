@@ -16,7 +16,7 @@ OPTIMIZATION_LEVEL				= 2
 COMPILE_TO_SHARED_LIBRARY 			= False	
 COMPILE_STATIC_VERSION				= False
 COMPILE_FOR_32_bit				= False
-ADDITIONAL_FLAGS				= "" # " -std=c++0x"
+ADDITIONAL_FLAGS				= "-Wno-implicit-fallthrough" # " -std=c++0x"
 #------------------------------------------------------------
 
 
