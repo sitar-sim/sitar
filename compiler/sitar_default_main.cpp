@@ -44,10 +44,10 @@ int main(int argc, char* argv[])
 
 	
 	//print module hierarchy
-	std::cout<<"\n ===========================";
-	std::cout<<"\n printing system hierarchy:";
-	std::cout<<"\n ===========================";
-	std::cout<<TOP.getInfo();
+	//std::cout<<"\n ===========================";
+	//std::cout<<"\n printing system hierarchy:";
+	//std::cout<<"\n ===========================";
+	//std::cout<<TOP.getInfo();
 
 	
 	uint64_t simulation_cycles;
