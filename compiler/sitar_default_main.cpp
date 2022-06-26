@@ -38,15 +38,16 @@ int main(int argc, char* argv[])
 #ifdef SITAR_ENABLE_LOGGING
 	//open a file for logging 
 	//by the default log stream
-	logger::defaultLogstream().open("log.txt");
+	//logger::defaultLogstream().open("log.txt");
+	setOstream(&TOP, &std::cout);
 #endif
 
 	
 	//print module hierarchy
-	//std::cout<<"\n ===========================";
-	//std::cout<<"\n printing system hierarchy:";
-	//std::cout<<"\n ===========================";
-	//std::cout<<TOP.getInfo();
+	std::cout<<"\n ===========================";
+	std::cout<<"\n printing system hierarchy:";
+	std::cout<<"\n ===========================";
+	std::cout<<TOP.getInfo();
 
 	
 	uint64_t simulation_cycles;
