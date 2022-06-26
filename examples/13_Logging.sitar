@@ -1,105 +1,185 @@
-//Examples of logging support
+//Example to illustrate the various aspects of logging support in sitar
 
 module Top
-	submodule a : Foo
-	submodule b : Bar
-	submodule c : Baz
+	submodule a : A_module //illustrates basic logging features
+	submodule b : B_module //illustrates how to use multiple loggers and send logs to files
+	submodule c : C_module //illustrates how to use a custom prefix
+	submodule d : D_module //illustrates logging control (enable/disable logging)
 end module
 
 
-module Foo
-
+module A_module
+//illustrates basic logging features
 behavior
-	//basic log statement.
-	//logging can only be done from within a code block statement
+	//a basic log statement.
+	//must lie within a code block
+	$ log<<endl<<"Hello world "; $;
+
+	//Note that whenever endl is passed,
+	//it inserts a newline and a prefix-(time, name) into the log.
+	//Without and endl, it would look like this:
+	$ log<<" --- Note: no \"endl\" means no prefix. ---"; $;
+
+	//Multiple arguments can be passed to the << operator in a chained manner
+	//just as we do to any C++ ostream object using the << operator.
+	$ log<<endl<<"Logging multi-line messages..."<<"\n\t\t...is as easy..."<<"\n\t\t\t...as this!"; $;
+
+	
+	//Some useful module-level functions to log the module's information:
 	$
-	log<<endl<<"Hello world ";
-	log<<endl<<"Current time is "<<current_time;
+	log<<endl<<"My name is "<<instanceId();
+	log<<endl<<"My full name is "<<hierarchicalId();
+	log<<endl<<"My parent's name is "<<parent()->instanceId();
+	log<<endl<<"I think the current time is "<<current_time;
+		  log<<" with cycle="<<current_time.cycle();
+		  log<<" and phase="<<current_time.phase();
 	$;
 
+	//The system hierarchy can be printed using the 
+	//getInfo() function defined for all modules.
+	//To get the entire system hierarchy, we have to
+	//call getInfo() for the top module
+	$
+	log<<endl<<"Printing system hierarchy:"<<"\n"<<parent()->getInfo()<<"\n";
+	$;
+	
+	//Info about a token can be logged as follows:
+	$
+	token<> t; // a token of size 0
+	token<1> t1; //a token of size 1
+	t1.data()[0]=0x12;//write a byte into t1's payload
+	log<<endl<<"t="<<t.info();
+	log<<endl<<"t1="<<t1.info();
+	$;
+
+end behavior
+end module
+
+
+
+module B_module
+//illustrates how to use multiple loggers and send logs to files
+behavior
+	//Output of a logger can be sent to any std::ostream object.
+	//By default, all modules output to a default stream object 
+	//called logger::default_logstream which sends output to std::cout. 
+
+	//Let's send a line to the default stream (std::cout)
+	$
+	log<<endl<<"Hello from module "<<hierarchicalId();
+	$;
+
+	//A module can have any number of additional loggers.
+	//Lets create an additional logger called log2, 
+	//which sends output to a file 'log_TOP.b.txt'
+	decl 
+	$
+	logger log2;	//logger object
+	std::ofstream logfile; //log file
+	$;
+
+	$
+	logfile.open ("log_"+hierarchicalId()+".txt", std::ofstream::out);
+	log2.setOstream(&logfile);
+	$;
+
+	$
+	log<<endl<<"1. Sending this line to std::cout";
+	log2<<endl<<"2. Sending this line to the additional logger, log2";
+	$;
+
+	//Now, suppose we don't want to have two loggers,
+	//but we want this module to send its default logs ONLY to the file 
+	//'log_TOP.b.txt' and not std::cout. This can be done as follows:
+	//Note: only this module's logger instance is affected. Other modules keep sending
+	//to their default log streams
+	$
+	log.setOstream(&logfile);
+	log<<endl<<"3. Sending this line to the log file, instead of std::cout ";
+	$;
+	
+	//to reset the logstream back to the default,
+	$
+	log.setOstream(logger::default_logstream);
+	log<<endl<<"4. Sending this line to std::cout using the default logstream.";
+	$;
+
+	//However, if you want to change the behavior of ALL modules,
+	//and send all the default logs to a file instead of std::cout,
+	//you can do so in the main file "compiler/sitar_default_main.cpp"
+	
+end behavior
+end module
+
+
+module C_module
+//illustrates how to use a custom prefix
+behavior
+	//Send something to the default logstream std::cout
+	//with the default prefix
+	$log<<endl<<"Hello!";$;
+	
+	//Now let's change the prefix 
+	//only for this module. 
+	$
+	log.useDefaultPrefix=false; //don't use the default prefix
+	log.setPrefix("####      :");//use this one instead
+	log<<endl<<"Hello again from module "<<hierarchicalId();
+	log.setPrefix("SomeCustomPrefix      :"); //now use this one.
+	log<<endl<<"Hello again from module "<<hierarchicalId();
+	$;
+	
+	//Note: time will not be printed if you use a custom prefix.
+	//To use a custom prefix but print current time also,
+	//you will have to send it with each line in the log,
+	//or call setPrefix in each cycle explicitly.
+	do
+		$
+		log.setPrefix("\n"+current_time.toString()+" "+"CUSTOM_PREFIX :");
+		log<<endl<<"Hello ! with a custom prefix.";
+		$;
+		wait(1,0);
+	while (current_time.cycle()<=3)	end do;
+
+	
+	//Now let's change the prefix back to the default one.
+	//This only takes effect after some delay (that is the 
+	//next phase that the module wakes up, it resets the prefix).
+	$
+	log.useDefaultPrefix=true;
+	$;
+	wait;//this wait is necessary for the prefix to go back to default value
+	$
+	log<<endl<<"Hello again from module "<<hierarchicalId();
+	$;
+
+end behavior
+end module
+
+
+module D_module
+behavior
 	//Compile-time control :
 	//	logging can be enabled/disabled at compile time using the macro SITAR_ENABLE_LOGIN
 	//	logging is enabled if this macro is defined during compilation.
 	//
 	//Run-time control :
 	//	logging can be turned ON/OFF for a module at runtime by calling 
-	//	log.turnON()/log.turnOFF() methods.
+	//	log.turnON()/log.turnOFF() methods for a particular module's log object.
 	//	It is ON by default. 
-	
 
 	$
 	log.turnOFF();
-	log<<endl<<"This should NOT be printed ";
+	log<<endl<<"1. This should NOT be printed ";
 	log.turnON();
-	log<<endl<<"This SHOULD get printed ";
+	log<<endl<<"2. This SHOULD get printed ";
 	$;
-	
-	
-	//Each time a module inserts endl into the log,
-	//the new line contains a prefix, 
-	//which is the name of the module by default.
-	//this prefix can be changed by calling  log.setPrefix() method.
-	
-	$
-	log.useDefaultPrefix=false;
-	log.setPrefix("---FOO---:");
-	log<<endl<<"We have changed the logger prefix henceforth to FOO for module "<<hierarchicalId();
-	log<<endl<<"Hello world again ";
-	log<<"\n"<<"NOTE - This is what happens if we use \\n instead of endl...no prefix";
-	$;
-
-	wait;
-
-	//try logging token information
-	$
-	token<> t;
-	token<1> t1;
-	t1.data()[0]=0x12;
-	log<<endl<<"t="<<t.info();
-	log<<endl<<"t1="<<t1.info();
-	$;
-
+	wait(10,0);
 
 end behavior
 end module
 
 
 
-module Bar
-behavior
-	//another module writing to the default stream
-	$
-	log<<endl<<"Hello world from "<<hierarchicalId()<<endl;
-	$;
-end behavior
-end module
 
-module Baz
-behavior
-	//Output of a logger can be sent to an arbitrary std::ostream.
-	//By default, all modules output to a default stream object 
-	//called logger::defaultLogstream() 
 
-	//Lets send the log output of this module to std::cout :
-	$
-	log.setOstream(&std::cout);
-	log<<endl<<" Hello World from module "<<hierarchicalId();
-	$;
-
-	//a module can have any number of additional loggers.
-	decl $logger log2,log3;$;
-	
-	$
-	log2.setPrefix("LOG2            :");
-	log3.setPrefix("LOG3            :");
-	log2.setOstream(&std::cout);
-	log2<<endl<<" What ho log2";
-	$;
-
-	//the additional loggers can be set to the 
-	//default file stream as follows:
-	$
-	log3.setOstream(&logger::defaultLogstream());
-	$
-end behavior
-end module

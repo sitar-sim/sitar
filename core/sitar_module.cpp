@@ -22,7 +22,7 @@ namespace sitar{
 		//first execute behavior of this module (runBehavior())
 		//then call run() for each child module
 		{
-			//set logger prefix for current cycle
+			//update logger prefix for current cycle
 			#ifdef SITAR_ENABLE_LOGGING
 			if(log.isON() and log.useDefaultPrefix)
 				setLogPrefix(current_time);
@@ -61,7 +61,7 @@ namespace sitar{
 		//and all its subcomponents as a string.
 		{
 			std::ostringstream os;
-			os<<"\n----------------------------------";
+			os<<"---------------------";
 			os<<"\n module ID  : "<<hierarchicalId();
 			os<<"\n type       : "<<_type;
 			{
@@ -143,7 +143,6 @@ namespace sitar{
 					os<<" of type "<<child->_type;
 				}
 			}
-			os<<"\n----------------------------------";
 
 			//Call getInfo recursively on all submodules and procedures:
 			{
@@ -152,12 +151,12 @@ namespace sitar{
 				for(it=_submodules.begin();it!=_submodules.end();it++)
 				{
 					module* child=it->second;
-					os<<child->getInfo();
+					os<<"\n"<<child->getInfo();
 				}
 				for(it=_procedures.begin();it!=_procedures.end();it++)
 				{
 					module* child=it->second;
-					os<<child->getInfo();
+					os<<"\n"<<child->getInfo();
 				}
 			}
 			return os.str();
@@ -228,7 +227,7 @@ namespace sitar{
 			_reexecute  = false;
 
 			//set logger to use the default logstream
-			log.setOstream(&logger::defaultLogstream());
+			log.setOstream(logger::default_logstream);
 
 		}
 

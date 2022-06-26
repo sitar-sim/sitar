@@ -20,7 +20,7 @@ using namespace sitar;
 //multithreaded execution).
 //
 //example: 
-//setOstream(&TOP, &default_logstream);
+//setOstream(&TOP, &some_logstream);
 //setOstream(&TOP, &std::cout);
 void setOstream(module* m, std::ostream* log);
 
@@ -35,21 +35,21 @@ int main(int argc, char* argv[])
 	TOP.setInstanceId("TOP");
 	TOP.setHierarchicalId("");
 
+
 #ifdef SITAR_ENABLE_LOGGING
-	//open a file for logging 
-	//by the default log stream
-	//logger::defaultLogstream().open("log.txt");
-	setOstream(&TOP, &std::cout);
+	//Logging related
+	logger::default_logstream=&std::cout; //send all logs to std::cout by default
+	
+	//to send all ogs to a file instead, 
+	//comment the line above and 
+	//uncomment the following:
+	//ofstream logfile;
+	//logfile.open ("LOG.txt", std::ofstream::out);
+	//logger::default_logstream=&logfile; //to send all logs to the file
+
+	setOstream(&TOP, logger::default_logstream);
 #endif
 
-	
-	//print module hierarchy
-	//std::cout<<"\n ===========================";
-	//std::cout<<"\n printing system hierarchy:";
-	//std::cout<<"\n ===========================";
-	//std::cout<<TOP.getInfo();
-
-	
 	uint64_t simulation_cycles;
 	uint64_t default_simulation_cycles = 100;
 
@@ -81,14 +81,14 @@ int main(int argc, char* argv[])
 
 //function to assign an ostream object to
 //a module and all its descendants for logging
-void setOstream(module* m, std::ostream* log)
+void setOstream(module* m, std::ostream* stream)
 {
-	m->log.setOstream(log);
+	m->log.setOstream(stream);
 	std::map<std::string,sitar::module*>::const_iterator it;
 	for(it=m->_submodules.begin();it!=m->_submodules.end();it++)
 	{
 		module* child=it->second;
-		setOstream(child, log);
+		setOstream(child, stream);
 	}
 }
 

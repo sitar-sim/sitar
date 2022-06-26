@@ -8,9 +8,10 @@ namespace sitar{
 
 			//definition of a static member variable 
 			//in logger class:
-			//
+			
 			//default ostream used by all modules for logging
-			std::ofstream logger::default_logstream;	
+			std::ostream* logger::default_logstream;
+
 }
 
 #endif

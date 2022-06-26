@@ -70,7 +70,7 @@ class module:public object
 		void setLogPrefix(const time& current_time);
 		bool useDefaultPrefix; 
 		//Set to true by default.
-		//if set to true, the default logginf prefix is
+		//if set to true, the default logging prefix is
 		//"<time><module name>:".
 		//Set this to false to use a custom prefix for
 		//logging.
