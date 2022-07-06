@@ -9,7 +9,7 @@
 //
 //A net object does not allocate memory for implementing the buffer.
 //A buffer memory (an array of tokens) must be assigned to each net
-//at elaboration time.
+//at elaboration time. This is done automatically in the translated code.
 
 
 
@@ -98,6 +98,17 @@ class net:public base_net
 				tok=_buffer[_front];
 				_front=(_front+1)%_capacity;
 				_num_tokens--;
+				return 1;
+			}
+		
+		bool peek(token<_width>& tok)
+			//copy a token and return 1 if net is not empty
+			//return 0 otherwise. Do not modify the state of the net.
+			{
+				if (empty()) return 0; //can't pull
+				//else
+				assert(_buffer);
+				tok=_buffer[_front];
 				return 1;
 			}
 

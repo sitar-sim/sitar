@@ -25,6 +25,9 @@ class module:public object
 	public :
 		
 		void run(const time& current_time);
+		//execute behavior of this module (runBehavior())
+		
+		void runHierarchical(const time& current_time);
 		//first execute behavior of this module (runBehavior())
 		//then call run() for each child module
 

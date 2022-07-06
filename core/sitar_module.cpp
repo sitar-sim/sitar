@@ -19,6 +19,20 @@
 namespace sitar{
 		
 		void module::run(const time& current_time)
+		//execute behavior of this module (runBehavior())
+		{
+			//update logger prefix for current cycle
+			#ifdef SITAR_ENABLE_LOGGING
+			if(log.isON() and log.useDefaultPrefix)
+				setLogPrefix(current_time);
+			#endif
+
+			//run self behavior, if not terminated
+			if (not _terminated)
+				runBehavior(current_time);
+		}
+		
+		void module::runHierarchical(const time& current_time)
 		//first execute behavior of this module (runBehavior())
 		//then call run() for each child module
 		{
@@ -27,18 +41,22 @@ namespace sitar{
 			if(log.isON() and log.useDefaultPrefix)
 				setLogPrefix(current_time);
 			#endif
-			
-			runBehavior(current_time);
+
+			//run self behavior, if not terminated
+			if (not _terminated)
+				runBehavior(current_time);
+			//run behavior of all submodules
 			std::map<std::string,module*>::iterator it;
 			for(it=_submodules.begin();it!=_submodules.end();it++)
 			{
 				module* child=it->second;
-				if(child and not(child->_terminated))
-					child->run(current_time);
+				if(child)
+					child->runHierarchical(current_time);
 			}
 			
 		}
 
+		#ifdef SITAR_ENABLE_LOGGING
 		void module::setLogPrefix(const time& current_time)
 		{
 			//set prefix for logger with a reasonable width =16.
@@ -49,6 +67,7 @@ namespace sitar{
 				s.insert(s.end(), padding - s.size(), ' ');
 			log.setPrefix(s+":");
 		}
+		#endif
 			
 
 
