@@ -15,23 +15,6 @@
 #include<omp.h>
 #endif
 
-//flags for checking termination
-bool INTERRUPTED  = false;
-
-
-//Interrupt Handler (for interrupting long simulations):
-extern "C" void InterruptHandler( int signum )
-{
-	INTERRUPTED=true;
-	#ifdef _OPENMP
-	#pragma omp flush(INTERRUPTED)
-	#endif
-	printf("\n INTERRUPT SIGNAL %d RECEIVED \n stopping simulation and saving results to file",signum);
-	sitar::stop_simulation();
-	return;
-}
-
-
 
 //function to assign an ostream object to a module 
 //for logging.
@@ -49,9 +32,6 @@ int main(int argc, char* argv[])
 {
 	using namespace std;
 	using namespace sitar;
-
-	//Register an interrupt handler
-	signal(SIGINT, InterruptHandler); 
 
 	//Instantiate the sitar module hierarchy
 	Top TOP;
@@ -77,7 +57,6 @@ int main(int argc, char* argv[])
 	};
 	std::cout<<"\n\n";
 
-	int num_threads =1; //number of threads used for simulation 
 	uint64_t simulation_time;//iteration/time variable
 	uint64_t final_time;
 	
@@ -96,6 +75,7 @@ int main(int argc, char* argv[])
 
 
 	#ifdef _OPENMP
+		int num_threads =1; //number of threads used for simulation 
 		//If we want parallel execution,
 		//we first flatten the hierarchy and create 
 		//a list of modules to run in parallel.
@@ -131,7 +111,7 @@ int main(int argc, char* argv[])
 			
 			//run the simulation.
 			//all threads synchronize at the end of each phase:
-			for(simulation_time=0; (simulation_time<simulation_cycles*2 and INTERRUPTED==false);simulation_time++)
+			for(simulation_time=0; (simulation_time<simulation_cycles*2);simulation_time++)
 			{
 				#pragma omp for nowait schedule(static)   
 				for(int j =0;j<num_modules;j++)
@@ -141,6 +121,7 @@ int main(int argc, char* argv[])
 				#pragma omp barrier
 				if(sitar::simulation_stopped()) break;
 			};
+
 			#pragma omp single
 			{final_time = simulation_time;}
 		}
@@ -150,18 +131,20 @@ int main(int argc, char* argv[])
 		for(int i=0;i<num_modules;i++)
 			logstreams[i]->close();
 		#endif
+		cout<<"\nSimulation stopped at time "<<sitar::time(final_time);
+		cout<<"\nRan OpenMP parallel simulation with num threads = "<<num_threads;
+		cout<<"\nModule-wise logs generated in files."<<"\n";
 	#else
 	//If we only want serial execution...
-		for(simulation_time=0; (simulation_time<simulation_cycles*2 and INTERRUPTED==false);simulation_time++)
+		for(simulation_time=0; (simulation_time<simulation_cycles*2);simulation_time++)
 		{
 			TOP.runHierarchical(simulation_time);
 			if(sitar::simulation_stopped()) break;
 		}
 		final_time = simulation_time;
+		cout<<"\nSimulation stopped at time "<<sitar::time(final_time)<<"\n";
 	#endif
 
-	cout<<"\nsimulation stopped at time "<<sitar::time(final_time)<<"\n";
-	cout<<"\nnum threads = "<<num_threads<<"\n";
 	return 0;
 }
 

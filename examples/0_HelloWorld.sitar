@@ -3,6 +3,6 @@
 module Top
 
 	behavior
-	$cout<<"\n Hello World!!";$;
+	$log<<endl<<"Hello World!!";$;
 	end behavior
 end module
