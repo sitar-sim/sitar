@@ -34,15 +34,17 @@ int main(int argc, char* argv[])
 	using namespace sitar;
 
 	//Instantiate the sitar module hierarchy
-	Top TOP;
-	TOP.setInstanceId("TOP");
-	TOP.setHierarchicalId("");
+	Top* TOP=new Top;
+	TOP->setInstanceId("TOP");
+	TOP->setHierarchicalId("");
+
 	
 	//Get simulation time from the command line
 	uint64_t simulation_cycles;
 	uint64_t default_simulation_cycles = 100;
 	cout<<"\n\n";
-	std::cout<<"\nRunning simulation...";
+	cout<<"\nModel size (size of TOP in Bytes):"<<sizeof(*TOP);
+	cout<<"\nRunning simulation...";
 	if(argc<2)
 	{
 		std::cout<<"\nSimulation time not specified";
@@ -70,7 +72,7 @@ int main(int argc, char* argv[])
 	//ofstream logfile;
 	//logfile.open ("LOG.txt", std::ofstream::out);
 	//logger::default_logstream=&logfile; 
-	setHierarchicalOstream(&TOP, logger::default_logstream);
+	setHierarchicalOstream(TOP, logger::default_logstream);
 	#endif
 
 
@@ -80,7 +82,7 @@ int main(int argc, char* argv[])
 		//we first flatten the hierarchy and create 
 		//a list of modules to run in parallel.
 		std::vector<module*> modules_to_run_in_parallel;
-		flattenHierarchy(&modules_to_run_in_parallel, &TOP);
+		flattenHierarchy(&modules_to_run_in_parallel, TOP);
 		int num_modules = modules_to_run_in_parallel.size();
 	
 		//also, we need each of these modules
@@ -126,24 +128,25 @@ int main(int argc, char* argv[])
 			{final_time = simulation_time;}
 		}
 	
+		cout<<"\nSimulation stopped at time "<<sitar::time(final_time);
+		cout<<"\nRan OpenMP parallel simulation with num threads = "<<num_threads;
 		//close all opened log files
 		#ifdef SITAR_ENABLE_LOGGING
+		cout<<"\nModule-wise logs generated in files.";
 		for(int i=0;i<num_modules;i++)
 			logstreams[i]->close();
 		#endif
-		cout<<"\nSimulation stopped at time "<<sitar::time(final_time);
-		cout<<"\nRan OpenMP parallel simulation with num threads = "<<num_threads;
-		cout<<"\nModule-wise logs generated in files."<<"\n";
 	#else
 	//If we only want serial execution...
 		for(simulation_time=0; (simulation_time<simulation_cycles*2);simulation_time++)
 		{
-			TOP.runHierarchical(simulation_time);
+			TOP->runHierarchical(simulation_time);
 			if(sitar::simulation_stopped()) break;
 		}
 		final_time = simulation_time;
-		cout<<"\nSimulation stopped at time "<<sitar::time(final_time)<<"\n";
+		cout<<"\nSimulation stopped at time "<<sitar::time(final_time);
 	#endif
+	cout<<"\n";
 
 	return 0;
 }
