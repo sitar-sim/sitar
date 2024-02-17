@@ -3,5 +3,7 @@
 *.a
 *.swp
 *.dblite
+*.bak
+__pycache__
 log.txt
 

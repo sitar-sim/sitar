@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 import sys, os, subprocess
 
 
@@ -28,36 +28,36 @@ def sitar_translate(args):
 	#check if the input file exists,
 	#otherwise abort
 	if not os.path.isfile(args.INPUT_FILE):
-		print "ERROR: File ",args.INPUT_FILE, "cannot be found"
-		print "Aborting translation."
-		print "Translation Failed"
+		print("ERROR: File ",args.INPUT_FILE, "cannot be found")
+		print("Aborting translation.")
+		print("Translation Failed")
 		sys.exit()
 
 	# get absolute path of OUTPUT_DIR
 	output_dir = os.path.abspath(args.OUTPUT_DIR)
-	print "Translating ", args.INPUT_FILE, "..."
-	print "-----------------"
+	print("Translating ", args.INPUT_FILE, "...")
+	print("-----------------")
 	# create output_dir if it doesn't already exist
 	if not os.path.exists(output_dir):
-		print "Created directory ", output_dir
+		print("Created directory ", output_dir)
 		os.makedirs(output_dir)
 	# run translator on input file
 	exit_code=subprocess.call([translator_location, args.INPUT_FILE, output_dir, template_location])
-	print "-----------------"
+	print("-----------------")
 	if (exit_code==True) :
-		print "Translation Failed"
+		print("Translation Failed")
 		sys.exit()
 	else:
-		print "Generated code in ", output_dir
+		print("Generated code in ", output_dir)
 
 
 
 def sitar_compile(args):
-	print "Compiling ......"
-	print"----------------"
+	print("Compiling ......")
+	print("----------------")
 
 	#write compilation options into a text file
-	print"Writing arguments to scons config file"
+	print("Writing arguments to scons config file")
 	fo = open(scons_config_file, "w")
 	
 	#first line is the location of the installation directory
@@ -100,14 +100,14 @@ def sitar_compile(args):
 	exit_code=subprocess.call(["scons", "-f", sconstruct_location])
 	if not (exit_code==False) :
 		
-		print "\n============================================================"
-		print "FAILURE: Compilation failed"
-		print "============================================================\n"
+		print("\n============================================================")
+		print("FAILURE: Compilation failed")
+		print("============================================================\n")
 		sys.exit()
 	else:
-		print "\n============================================================"
-		print "SUCCESS: Generated Simulation Executable ", args.OUTPUT_FILE
-		print "============================================================\n"
+		print("\n============================================================")
+		print("SUCCESS: Generated Simulation Executable ", args.OUTPUT_FILE)
+		print("============================================================\n")
 	
 
 #-----------------------------------------------------------

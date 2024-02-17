@@ -4,9 +4,9 @@ Installation instructions
 
 PREREQUISITES:
 
-	Linux (tested on Ubuntu 12:04)
+	Linux (tested on Ubuntu 22.04)
 	gcc >= version 4.5
-	python >= version 2.7
+	python3
 	scons
 	OpenMP (optional) Required for parallel simulation.
 		

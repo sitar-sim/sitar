@@ -22,13 +22,13 @@ ADDITIONAL_FLAGS				= "-Wno-implicit-fallthrough" # " -std=c++0x"
 
 
 if(not(OPTIMIZATION_LEVEL==0 or OPTIMIZATION_LEVEL==1 or OPTIMIZATION_LEVEL==2 or OPTIMIZATION_LEVEL ==3 )) :
-	print "Incorrect optimization level specified in SConstruct file for SITAR compilation"
+	print("Incorrect optimization level specified in SConstruct file for SITAR compilation")
 	exit()
 
 
 #Read settings from config file
 import os, glob
-print "reading options from sitar_scons_config.txt..."
+print("reading options from sitar_scons_config.txt...")
 config_file="./sitar_scons_config.txt"
 DIRS = [line.strip() for line in open(config_file, "r")]
 SITAR_INSTALLATION_DIR=DIRS.pop(0)
@@ -57,12 +57,12 @@ for item in DIRS:
 
 import sys
 if not (any ("Top.h" in s for s in sitar_files)):
-	print "\n========================================="
-	print "WARNING: No Top.h found!" 
-	print "Did you forget to write a \"Top\" module?"
-	print "The following files are included for compilation :"
-	print  sitar_files
-	print "===========================================\n"
+	print("\n=========================================")
+	print("WARNING: No Top.h found!") 
+	print("Did you forget to write a \"Top\" module?")
+	print("The following files are included for compilation :")
+	print(sitar_files)
+	print("===========================================\n")
 	sys.exit(1)
 	
 
@@ -84,8 +84,8 @@ for item in DIRS:
 
 
 
-print "\n============================================================"
-print "scons messages:\n"
+print("\n============================================================")
+print("scons messages:\n")
 
 
 

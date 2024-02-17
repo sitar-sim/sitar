@@ -1,15 +1,11 @@
 ==================================================================
-Sitar : Simulation Tool for Architectural Research (version 2.0)
+Sitar V2.0
 ==================================================================
 
-Sitar is a framework for modeling cycle-based systems. 
-It consists of a system description language and a
-lightweight simulation kernel.  
 
-Authors: 
-	Neha V. Karanjkar <neha.karanjkar@gmail.com> IIT Bombay
-	Madhav P. Desai <madhav@ee.iitb.ac.in> IIT Bombay
-	August 2016
+Sitar is a framework for modeling and parallel simulation of synchronous discrete-event systems.
+It consists of a system description language and a lightweight simulation kernel.  
+
 	
 This folder contains:
 
@@ -37,5 +33,9 @@ License:
 	Sitar is provided with an MIT-license. See ./LICENSE
 	The sitar translator uses AntlrV3 (C-runtime).
 	For the AntlrV3 licence, see ./translator/antlr3Cruntime/libantlr3c-3.4/COPYING
+
+Authors: 
+	Neha Karanjkar 
+	Madhav Desai 
 
 Sitar webpage : https://nehakaranjkar.github.io/sitar/
