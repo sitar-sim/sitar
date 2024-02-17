@@ -1,40 +1,37 @@
 # Sitar V2.0
 
 
-Sitar is a framework for modeling and parallel simulation of synchronous discrete-event systems.
+Sitar is a framework for modeling and parallel simulation of synchronous discrete-event systems.\
 It consists of a system description language and a lightweight, C++-based simulation kernel.  
+
 
 
 ## Getting Started
 
 ### Prerequisites
-	* Linux (tested on Ubuntu 18/20/22)
-	* Python3
-	* SCons
-	* gcc (version >=4.5)
-	* OpenMP 
+* Linux (tested on Ubuntu 18/20/22)
+* Python3
+* SCons
+* gcc (version >=4.5)
+* OpenMP 
 
 ### Installation
-	1. Run the install script in the terminal `./install.py`
-	This should generate an executable "sitar_translator" inside ./translator/parser folder
+1. Download or clone this repository, enter the repository and run the installation script by typing `./install.py` in your terminal. This should generate an executable called `sitar_translator` inside the `translator/parser` folder.
+   
+3. Add the following lines to your `~/.bashrc` file to use the sitar commands outside the installation folder. Replace `<path>` with absolute path of the installation folder.
+   ```
+   #-------------------------
+   export LD_LIBRARY_PATH=<path-to-sitar>/translator/antlr3Cruntime/build/lib:${LD_LIBRARY_PATH}
+   export PATH=<path-to-sitar>/scripts:${PATH}
+   #-------------------------
+   ```
+### Usage
+- Refer to `/examples/README` for running examples.
+- Type `sitar -h` at the terminal for command options.
+- (Optional) for enabling syntax highlighting inside Vim editor for sitar language, refer to `vim/README`
 
-	2. Add the following lines to your ~/.bashrc file to use the sitar translator and compiler executables outside the installation folder. Replace *<path>*  
-	   with absolute path of this folder
 
-	> #-------------------------
-	> #sitar paths:
-	> export LD_LIBRARY_PATH=<path-to-sitar>/translator/antlr3Cruntime/build/lib:${LD_LIBRARY_PATH}
-	> export PATH=<path-to-sitar>/scripts:${PATH}
-	> #-------------------------
-
-	3. Refer to /examples/README for running examples.
-
-	4. Type "sitar -h" at the terminal for command options.
-
-	5. (Optional) for enabling syntax highlighting inside Vim editor 
-	for sitar language, refer to vim/README
-
-## This folder contains:
+### This folder contains
 
 	INSTALL		: installation instructions
 	install.py	: installation script
@@ -47,18 +44,14 @@ It consists of a system description language and a lightweight, C++-based simula
 	scripts		: script that forms the "sitar" command at the terminal
 	vim		: syntax highlighting support for vim editor
 
+## License
+Sitar is provided with an MIT-license. See `LICENSE` for more information.\
+The sitar translator uses AntlrV3 (C-runtime).\
+For the AntlrV3 licence, see `translator/antlr3Cruntime/libantlr3c-3.4/COPYING`
 
-## License:
-	Sitar is provided with an MIT-license. See ./LICENSE
-	The sitar translator uses AntlrV3 (C-runtime).
-	For the AntlrV3 licence, see ./translator/antlr3Cruntime/libantlr3c-3.4/COPYING
-
-## Authors: 
-	Neha Karanjkar 
-	Madhav Desai 
-
-## Sitar webpage : 
-	[https://nehakaranjkar.github.io/sitar/](https://nehakaranjkar.github.io/sitar/)
+## Authors 
+* Neha Karanjkar
+* Madhav Desai 
 
 
 
