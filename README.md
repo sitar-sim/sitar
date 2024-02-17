@@ -2,7 +2,7 @@
 
 
 Sitar is a framework for modeling and parallel simulation of synchronous discrete-event systems.\
-It consists of a system description language and a lightweight, C++-based simulation kernel.  
+It consists of a custom modeling language and a lightweight, C++ based simulation kernel.  
 
 
 
