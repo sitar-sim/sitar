@@ -1,0 +1,31 @@
+//An example showing atomic and compound statements
+
+module Top
+  behavior
+    
+	decl $int x;$;
+	//Input x from user
+	$ std::cout<<"\nEnter a number:";std::cin>>x;$;
+	
+	//Branch	
+	if($x%2==0$) then
+		do //Loop
+			wait(1,0); //wait for one cycle
+			$log<<endl<<"In the even branch";$;
+		while($current_time.cycle()<4$) end do; 
+		stop simulation;
+	else
+		[  //Parallel block
+			wait (2,0);
+			$log<<endl<<"In the odd branch";$;
+		||
+			wait until ($current_time>=time(x,0)$);
+		];
+	end if;
+	$log<<endl<<"Done";$;
+	stop simulation;
+  end behavior
+end module
+
+
+
