@@ -5,9 +5,7 @@ Sitar is a framework for modeling and parallel simulation of synchronous discret
 It consists of a custom modeling language and a lightweight, C++ based simulation kernel.
 #
 
-Here's an example of a behavioral description in Sitar, the corresponding control flow and the simulation output:
-
-<img src="https://github.com/NehaKaranjkar/sitar/assets/21056796/7d0b7e53-be72-4aba-b2f7-1a0a2066d797" width="800">
+![sitar simulation rfamework](documentation/sitar.png?raw=true "sitar")
 
 
 ## Getting Started
