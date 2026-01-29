@@ -1,0 +1,2 @@
+Docs preview:
+  mkdocs serve

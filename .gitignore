@@ -6,4 +6,7 @@
 *.bak
 __pycache__
 log.txt
-
+# MkDocs generated documentation
+generated_site
+**/*.egg-info/
+**/__pycache__/

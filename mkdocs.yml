@@ -1,0 +1,69 @@
+site_name: Sitar Simulation
+site_description: A cycle-based discrete-event modeling framework
+site_author: Neha Karanjkar
+site_dir: generated_site
+
+repo_url: https://github.com/sitar-sim/sitar
+repo_name: sitar-sim/sitar
+theme:
+  logo: assets/sitar_logo.png
+  name: material
+  highlightjs: false
+  
+  palette: 
+    # Palette toggle for light mode
+    - scheme: colorful
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: blue grey
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Examples: examples.md
+  - Language:
+      - Syntax: language/syntax.md
+      - Timing Model: language/timing.md
+      - Hierarchy: language/hierarchy.md
+      - Logging: language/logging.md
+  - Parallel Execution: parallelization.md
+  - Design Notes: design.md
+
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      use_pygments: true
+      pygments_lang_class: true
+      anchor_linenums: true
+      line_spans: __span
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: .
+  - pymdownx.superfences
+  - attr_list
+
+plugins:
+  - search
+extra_css:
+  - stylesheets/extra.css

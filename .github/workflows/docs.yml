@@ -1,0 +1,41 @@
+name: Build and deploy docs
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Get your repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python on the CI machine
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Install documentation dependencies
+      - name: Install docs dependencies
+        run: |
+          pip install -r docs/requirements.txt
+          pip install -e ./sitar_pygments_lexer
+
+      # 4. Build the static site
+      - name: Build documentation
+        run: mkdocs build
+
+      # 5. Publish to gh-pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./generated_site
