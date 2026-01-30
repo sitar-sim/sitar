@@ -66,4 +66,4 @@ markdown_extensions:
 plugins:
   - search
 extra_css:
-  - stylesheets/extra.css
+  - stylesheets/extra.css?v=1
