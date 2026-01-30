@@ -35,8 +35,9 @@ jobs:
 
       # 5. Publish to gh-pages
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdocs gh-deploy --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # COPY this exactly as is
           publish_dir: ./generated_site
 
