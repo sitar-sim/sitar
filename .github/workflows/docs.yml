@@ -37,7 +37,7 @@ jobs:
       # 5. Publish to gh-pages
       - name: Deploy to GitHub Pages
         run: |
-          mkdocs gh-deploy --clean
+          mkdocs gh-deploy --clean --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # COPY this exactly as is
 
