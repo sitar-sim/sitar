@@ -19,6 +19,10 @@
   --md-code-hl-constant-color:   #0000aa; /* blue – logical constants */
   --md-code-hl-special-color:    #2b91af; /* teal – ports, nets, types */
 
+  --md-code-hl-special-color:    #2b91af; /* teal – ports, nets, types */
+  --md-code-hl-operator-color:   #2b91af; /* teal  – operators */
+  --md-code-hl-punctuation-color:#008000; /* green – punctuation */
+
 }
 /* Embedded $...$ code blocks — light theme */
 [data-md-color-scheme="default"] .md-typeset code .g,
