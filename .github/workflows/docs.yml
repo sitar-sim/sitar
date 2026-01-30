@@ -1,12 +1,10 @@
 name: Build and deploy docs
 
 on:
-  workflow_dispatch:
-on:
   push:
     branches:
-      - main
-
+      - master
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -42,5 +40,4 @@ jobs:
           mkdocs gh-deploy --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # COPY this exactly as is
-          publish_dir: ./generated_site
 
