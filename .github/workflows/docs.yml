@@ -1,9 +1,12 @@
 name: Build and deploy docs
 
 on:
+  workflow_dispatch:
+on:
   push:
     branches:
       - main
+
 
 permissions:
   contents: write
