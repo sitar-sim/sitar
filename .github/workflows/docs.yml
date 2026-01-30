@@ -35,9 +35,13 @@ jobs:
         run: mkdocs build
 
       # 5. Publish to gh-pages
-      - name: Deploy to GitHub Pages
-        run: |
-          mkdocs gh-deploy --clean --force
+      - name: Deploy documentation
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # COPY this exactly as is
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/sitar-sim/sitar.git
+
+          mkdocs gh-deploy --clean --force
