@@ -40,3 +40,48 @@
   border-radius: 3px;
 }
 
+/* =========================================================
+   Material sidebar: emphasize section headings + grouping
+   Copy-paste safe
+   ========================================================= */
+
+.md-sidebar--primary
+.md-nav__item--section
+> .md-nav__link {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: #387f8f;
+  letter-spacing: 0.02em;
+}
+
+.md-sidebar--primary
+.md-nav__item .md-nav__item {
+  margin-left: 0.6em;
+}
+
+.md-sidebar--primary
+.md-nav__item--section {
+  background-color: rgba(29, 67, 87, 0.04);
+  padding: 0.2em 0.3em;
+  border-radius: 4px;
+  margin-top: 0.6em;
+}
+
+.md-sidebar--primary
+.md-nav__item--active
+> .md-nav__link {
+  color: #387f8f;
+  font-weight: 700;
+}
+
+.md-content h1,
+.md-content h2,
+.md-content h3 {
+  font-weight: 500;
+  color: #387f8f;
+}
+
+/* Optional: make h1 slightly stronger than h2/h3 */
+.md-content h1 {
+  font-weight: 700;
+}

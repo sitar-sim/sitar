@@ -1,4 +1,4 @@
-site_name: Sitar Simulation
+site_name: The Sitar Simulation Framework
 site_description: A cycle-based discrete-event modeling framework
 site_author: Neha Karanjkar
 site_dir: generated_site
@@ -6,7 +6,7 @@ site_dir: generated_site
 repo_url: https://github.com/sitar-sim/sitar
 repo_name: sitar-sim/sitar
 theme:
-  logo: assets/sitar_logo.png
+  #logo: assets/sitar_logo.png
   name: material
   highlightjs: false
   
@@ -27,28 +27,18 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.instant
     - navigation.sections
-    - navigation.expand
+    #- navigation.expand
+    - navigation.tracking
+    - navigation.instant
     - navigation.top
     - content.code.copy
     - search.highlight
     - search.suggest
-nav:
-  - Home: index.md
-  - Getting Started: getting-started.md
-  - Examples: examples.md
-  - Language:
-      - Syntax: language/syntax.md
-      - Timing Model: language/timing.md
-      - Hierarchy: language/hierarchy.md
-      - Logging: language/logging.md
-  - Parallel Execution: parallelization.md
-  - Design Notes: design.md
-
 
 markdown_extensions:
   - admonition
+  - def_list
   - footnotes
   - toc:
       permalink: true
@@ -62,8 +52,67 @@ markdown_extensions:
       base_path: .
   - pymdownx.superfences
   - attr_list
-
+  - pymdownx.tasklist:
+      custom_checkbox: true
 plugins:
   - search
 extra_css:
-  - stylesheets/extra.css?v=1
+  - stylesheets/extra.css
+
+nav:
+  - Introduction:
+      - What is Sitar: index.md
+      - Getting Started: getting_started.md
+
+  - Basic Concepts:
+      - Components: components_modules_nets.md
+      - Timing and Execution: timing_and_execution_model.md
+      - Module Behavior: module_behavior.md
+      - Tokens, Input and Output: io_and_tokens.md
+
+  - Language and Examples:
+      - Describing Structure:
+          - Modules: language_and_examples/modules.md
+          - Nets and Ports: language_and_examples/nets_and_ports.md
+          - Hierarchy: language_and_examples/hierarchy.md
+          - Parameters: language_and_examples/parameters.md
+          - Regular Structures: language_and_examples/regular_structures_for_loops.md
+
+      - Describing Behavior:
+          - Sequence: language_and_examples/sequence.md
+          - Atomic and Compound Statements: language_and_examples/atomic_and_compound_statements.md
+          - Code Blocks: language_and_examples/code_blocks.md
+          - Wait: language_and_examples/wait.md
+          - Log: language_and_examples/logging.md
+          - If-Else: language_and_examples/if_else.md
+          - Do-While: language_and_examples/do_while.md
+          - Parallel: language_and_examples/parallel.md
+          - Procedures: language_and_examples/procedures.md
+
+      - Useful Constructs:
+          - Templates: language_and_examples/templates.md
+          - Advanced Logging: language_and_examples/advanced_logging.md
+
+  - Examples:
+      - Basic Examples:
+          - Shift Register: language_and_examples/basic_examples/shift_register.md
+          - State Machine: language_and_examples/basic_examples/state_machine.md
+          - Producer Consumer: language_and_examples/basic_examples/producer_consumer.md
+
+      - Advanced Examples:
+          - Processor and Memory: language_and_examples/advanced_examples/processor_model.md
+          - Mesh: language_and_examples/advanced_examples/mesh.md
+
+  - Parallel Execution:
+      - Enabling Parallel Execution: parallel_execution.md
+      - Measuring Speedup: speedups.md
+
+  - How Sitar Works:
+      - Translation: how_sitar_works/translation.md
+      - Execution Semantics: how_sitar_works/execution_semantics.md
+
+  - More About Sitar:
+      - References: references.md
+      - Authors: authors.md
+      - Development Notes: development.md
+

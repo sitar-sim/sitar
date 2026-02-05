@@ -42,7 +42,8 @@ behavior
 		cout<<"\n"<<hierarchicalId()<<" pulled a token "<<t2.info()<<" which has float value "<<f;
 	}
 	$;
-	while(this_cycle<20) end do;
+	decl $int XYZ=100;$;
+	while(this_cycle<20) end do;	
 end behavior
 end module
 
