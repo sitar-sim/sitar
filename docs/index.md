@@ -42,7 +42,6 @@ A Sitar model is written using the Sitar modeling language and processed through
 
 Parallel execution is supported via OpenMP and can be enabled without modifying the model itself.
 
-
 ## Publications and Slides
 
 To learn more about the design and applications of Sitar, see the following resources:
