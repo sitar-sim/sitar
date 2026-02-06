@@ -21,7 +21,9 @@ By restricting the modeling scope to this class of systems, Sitar enables a simp
 
 Sitar models a system as a collection of **modules** that communicate via **nets** (FIFO channels) and evolve in discrete logical time. Each simulation cycle is divided into **two phases**: a *read phase*, in which nets may only be read from, and a *write phase*, in which nets may only be written to. This restriction enforces **race-free and deterministic execution**, and enables parallel simulation by mapping individual modules to separate execution threads that synchronize only at the end of each phase.
 
+<!--
 ![Sitar simulation framework](assets/images/sitar.png "Sitar"){ width=70% }
+-->
 
 This execution model closely follows a **communicating Moore-machine paradigm**, eliminating the need for explicit dependency analysis in the system. A direct consequence of this design is that communication over nets incurs a minimum latency of **one clock cycle**, which is natural for target application domains such as computer architecture and system-level modeling.
 
@@ -48,16 +50,16 @@ To learn more about the design and applications of Sitar, see the following reso
 
 1. **SIMULTECH 2022 (Best Paper Award)**  
    Foundational paper introducing Sitar and its parallel simulation approach.  
-   [`download pdf`](/publications/paper1_SIMULTECH2022.pdf)
+   [`download pdf`](publications/paper1_SIMULTECH2022.pdf)
 
 2. **Winter Simulation Conference 2024**  
    Detailed description of the execution model and performance evaluation.  
-   [`download pdf`](/publications/paper2_WinterSim2024.pdf)
+   [`download pdf`](publications/paper2_WinterSim2024.pdf)
 
 
 3. **Tutorial Slides**  
    Overview of key ideas, modeling constructs, and execution semantics.  
-   [`download pdf`](/publications/2_sitar_tutorial.pdf)
+   [`download pdf`](publications/2_sitar_tutorial.pdf)
 
 ---
 
