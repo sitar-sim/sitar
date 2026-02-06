@@ -2,6 +2,7 @@ site_name: Sitar Simulation Framework
 site_description: A cycle-based discrete-event modeling framework
 site_author: Neha Karanjkar
 site_dir: generated_site
+use_directory_urls: false
 
 repo_url: https://github.com/sitar-sim/sitar
 repo_name: sitar-sim/sitar

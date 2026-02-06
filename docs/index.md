@@ -19,19 +19,23 @@ By restricting the modeling scope to this class of systems, Sitar enables a simp
 ---
 ## Core Idea
 
-Sitar models a system as a collection of **modules** that communicate via **nets** (FIFO channels) and evolve in discrete logical time. Each simulation cycle is divided into **two phases**: a *read phase*, in which nets may only be read from, and a *write phase*, in which nets may only be written to. This restriction enforces **race-free and deterministic execution**, and enables parallel simulation by mapping individual modules to separate execution threads that synchronize only at the end of each phase.
+- Sitar models a system as a collection of **Modules** that communicate via **Nets** (FIFO channels) and evolve in discrete logical time. Each simulation cycle is divided into **two phases**: a *read phase*, in which nets may only be read from, and a *write phase*, in which nets may only be written to. This restriction enforces **race-free and deterministic execution**, and enables parallel simulation by mapping individual modules to separate execution threads that synchronize only at the end of each phase, eliminating the need for explicit dependency analysis in the system. A direct consequence of this design is that communication over nets incurs a minimum latency of **one clock cycle**, which is natural for target application domains such as computer architecture and system-level modeling.
 
+![Sitar basic components](assets/images/sitar_modules_and_time.png "Sitar Components")
+
+- Sitar also provides a modeling language that has a rich set of constructs for describing **system structure and interconnections**, as well as module **behavior** in a sequential manner, including fork–join parallelism (using **parallel blocks**), **wait statements**, and control-flow constructs such as loops (**do-while**) and conditionals (**if-else**). Parallel blocks can be used to model concurrent components that require *zero-latency* interaction, grouped within a single module and executed on the same thread with a fixed, deterministic ordering. Raw C++ code can be embedded into the description in well-defined ways, within dollar symbols (`#!sitar $...$`).
+
+
+![Sitar language](assets/images/sitar_module_behavior.png "Sitar Language"){ width=100% }
+
+
+- Each module description is translated into highly readable C++ code as a class with the behavior translated as lightweight state-machine code implemented using a case-statement with explicit activity pointers, conceptually similar to *coroutines in C++* or *generator functions in Python*. This design allows users to focus on **system structure and behavior**, while the framework manages time advancement, scheduling, and deterministic parallel execution.
+
+
+- The simulation kernel itself is intentionally simple and lightweight. This makes it easy to **co-simulate Sitar models with external simulation environments**, by advancing the Sitar model using explicit clock ticks (one per phase, i.e., two per simulation cycle).
 <!--
-![Sitar simulation framework](assets/images/sitar.png "Sitar"){ width=70% }
+![Sitar execution algorithm](assets/images/sitar_execution_algorithm.png "Sitar Execution Algorithm"){ width=80% }
 -->
-
-This execution model closely follows a **communicating Moore-machine paradigm**, eliminating the need for explicit dependency analysis in the system. A direct consequence of this design is that communication over nets incurs a minimum latency of **one clock cycle**, which is natural for target application domains such as computer architecture and system-level modeling.
-
-To model concurrent components that require *zero-latency* interaction, Sitar provides **parallel blocks**, which allow multiple concurrent behaviors to be grouped within a single module and executed on the same thread with a fixed, deterministic ordering.
-
-Sitar also provides a modeling language with a rich set of constructs, including **fork–join parallelism**, **wait statements**, and control-flow constructs such as **loops** and **conditionals**. These descriptions are translated into efficient, lightweight, user-visible **state-machine code**, conceptually similar to *coroutines in C++* or *generator functions in Python*. This design allows users to focus on **system structure and behavior**, while the framework manages time advancement, scheduling, and deterministic parallel execution.
-
-The simulation kernel itself is intentionally simple and lightweight. This makes it easy to **co-simulate Sitar models with external simulation environments**, by advancing the Sitar model using explicit clock ticks (one per phase, i.e., two per simulation cycle).
 
 ---
 ## Toolchain Overview
