@@ -2,26 +2,30 @@
 
 Sitar is a framework for modeling and parallel simulation of **synchronous (clocked) discrete-event systems**.  
 
-It combines a **domain-specific modeling language** with a **lightweight C++ simulation kernel**, enabling
-deterministic and scalable simulation of tightly synchronized systems.
+It combines a **domain-specific modeling language** with a **lightweight C++ simulation kernel** for deterministic and scalable parallel simulation of synchronous systems.
 
 ## Target Applications
 Sitar is ideally suited for modeling **large and complex synchronous systems with a static interconnection structure**, particularly in domains where system behavior is naturally expressed at discrete time-steps and where scalability and determinism in simulation are critical. Typical application areas include:
 
-- **System-level and computer architecture research models**, such as multi-core processors, memory hierarchies, interconnects, and on-chip networks, where components interact synchronously on a global clock.
-- **Computer and communication networks**, including packet-switched networks, mesh and torus topologies, and network-on-chip (NoC) models, where communication latency and buffering semantics are explicitly modeled.
+- **System-level and computer architecture research models**, such as multi-core processors, memory hierarchies, interconnects, and on-chip networks, where components activate and interact using a global clock.
+- **Computer and communication networks**, including packet-switched networks and network-on-chip (NoC) models, where communication latency and buffering semantics are explicitly modeled.
 - **Discrete-time queueing networks**, where arrivals, services, and routing decisions occur at fixed time intervals and system state evolves synchronously across components.
 
-By restricting the modeling scope to this class of systems, Sitar enables a simple and efficient simulation algorithm that scales well with model size, while remaining expressive enough for writing very large, complex models.
-
 !!! tip  "Scalability and Performance"
-	In single-threaded execution, Sitar’s performance is comparable to that of SystemC. When parallel execution is enabled, speedups of up to **50×** have been observed on a 40-core shared-memory system for large, compute-intensive models.
+	Using single-threaded simulation execution, Sitar’s performance is comparable to that of SystemC. When shared-memory parallel execution is enabled, speedups of up to **50×** have been observed on a 40-core shared-memory system for large, compute-intensive models.
 ---
 ## Core Idea
 
-- Sitar models a system as a collection of **Modules** that communicate via **Nets** (FIFO channels) and evolve in discrete logical time. Each simulation cycle is divided into **two phases**: a *read phase*, in which nets may only be read from, and a *write phase*, in which nets may only be written to. This restriction enforces **race-free and deterministic execution**, and enables parallel simulation by mapping individual modules to separate execution threads that synchronize only at the end of each phase, eliminating the need for explicit dependency analysis in the system. A direct consequence of this design is that communication over nets incurs a minimum latency of **one clock cycle**, which is natural for target application domains such as computer architecture and system-level modeling.
-
+- Sitar models a system as a collection of **Modules** that communicate via **Nets** (FIFO channels) and evolve in discrete logical time. Each simulation cycle is divided into **two phases**: a *read phase*, in which nets may only be read from, and a *write phase*, in which nets may only be written to. A net can have at-most one reader and at-most one writer. **This restriction is key for enabling parallel race-free and deterministic execution**. Simulation progresses by executing the behavior of every module once in each phase (that is, twice in a clock cycle). To enable parallel simulation, individual modules or groups of modules are mapped to separate execution threads that synchronize at the end of each phase. 
 ![Sitar basic components](assets/images/sitar_modules_and_time.png "Sitar Components")
+
+
+- The two-phase execution eliminates the need for explicit dependency analysis between modules in the system, allowing them to be executed in any sequence, or in parallel. A direct consequence of this design is that communication over nets incurs a minimum latency of **one clock cycle**, which is natural for target application domains such as computer architecture and system-level modeling. Zero-delay communication between components can still be modeled by grouping such closely-knit components within a single module and mapping them to a single execution thread. 
+
+!!! tip "Key Idea"
+	In essence, parallelism is achieved by breaking up a large model along nets that have non-zero latencies, and mapping the chunks to separate execution threads (that run in parallel, and synchronize at the end of each phase).
+
+- By restricting the modeling scope to this class of systems, Sitar enables a simple and efficient simulation algorithm that scales well with model size, while remaining expressive enough for writing very large, complex models.
 
 - Sitar also provides a modeling language that has a rich set of constructs for describing **system structure and interconnections**, as well as module **behavior** in a sequential manner, including fork–join parallelism (using **parallel blocks**), **wait statements**, and control-flow constructs such as loops (**do-while**) and conditionals (**if-else**). Parallel blocks can be used to model concurrent components that require *zero-latency* interaction, grouped within a single module and executed on the same thread with a fixed, deterministic ordering. Raw C++ code can be embedded into the description in well-defined ways, within dollar symbols (`#!sitar $...$`).
 
@@ -42,11 +46,11 @@ By restricting the modeling scope to this class of systems, Sitar enables a simp
 
 A Sitar model is written using the Sitar modeling language and processed through a simple toolchain:
 
-- [x] The model is translated into readable C++ code.
+- [x] The Sitar model description is translated into readable C++ code.
 - [x] The generated code is compiled together with the simulation kernel.
 - [x] The resulting executable is run in serial or parallel mode.
 
-Parallel execution is supported via OpenMP and can be enabled without modifying the model itself.
+Parallel execution is supported via OpenMP and can be enabled without modifying the model itself. Mapping of model components to execution threads can be static and customised or left to OpenMP's dynamic scheduler.
 
 ## Publications and Slides
 
