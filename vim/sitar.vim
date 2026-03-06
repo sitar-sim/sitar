@@ -16,7 +16,7 @@ syn sync linebreaks=1
 syn keyword sitarMainKeywords 		module procedure parameter behavior  
 syn keyword sitarBehavioralKeywords 	wait until if then else do while nothing stop simulation run  end
 syn keyword sitarStructuralKeywords  	inport inport_array outport outport_array buffer net net_array submodule submodule_array width capacity for in to 
-syn keyword sitarOtherKeywords 		or and not this_phase this_cycle
+syn keyword sitarOtherKeywords 		or and not this_phase this_cycle current_time
 syn keyword sitarCodeSnipetteKeywords 	include decl init 
 
 " Code regions

@@ -29,6 +29,7 @@ Sitar is ideally suited for modeling **large and complex synchronous systems wit
 
 - Sitar also provides a modeling language that has a rich set of constructs for describing **system structure and interconnections**, as well as module **behavior** in a sequential manner, including fork–join parallelism (using **parallel blocks**), **wait statements**, and control-flow constructs such as loops (**do-while**) and conditionals (**if-else**). Parallel blocks can be used to model concurrent components that require *zero-latency* interaction, grouped within a single module and executed on the same thread with a fixed, deterministic ordering. Raw C++ code can be embedded into the description in well-defined ways, within dollar symbols (`#!sitar $...$`).
 
+- Sitar provides **systematic logging support**, with fine-grained control per module, per output stream, and dynamically in time, based on simulation time or conditions. This is essential for writing, debugging and validating complex models, especially when performing parallel simulations.
 
 ![Sitar language](assets/images/sitar_module_behavior.png "Sitar Language"){ width=100% }
 
@@ -46,11 +47,11 @@ Sitar is ideally suited for modeling **large and complex synchronous systems wit
 
 A Sitar model is written using the Sitar modeling language and processed through a simple toolchain:
 
-- [x] The Sitar model description is translated into readable C++ code.
-- [x] The generated code is compiled together with the simulation kernel.
+- [x] The Sitar model description is translated into readable C++ code. Each module definition becomes a C++ class. The Sitar descriptions can also include or embed external C++ code. 
+- [x] The generated code is compiled together with the simulation kernel and the user-included/external C++ code (if any).
 - [x] The resulting executable is run in serial or parallel mode.
 
-Parallel execution is supported via OpenMP and can be enabled without modifying the model itself. Mapping of model components to execution threads can be static and customised or left to OpenMP's dynamic scheduler.
+Parallel execution is supported via OpenMP and can be enabled without modifying the model itself. Mapping of model components to execution threads can be static and specified by the modeler, or left to OpenMP's dynamic scheduler.
 
 ## Publications and Slides
 

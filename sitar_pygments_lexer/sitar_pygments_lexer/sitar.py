@@ -112,10 +112,11 @@ class SitarLexer(RegexLexer):
                         "not",
                         "this_phase",
                         "this_cycle",
+                        "current_time",
                     ),
                     suffix=r"\b",
                 ),
-                Keyword.Constant,
+                Keyword,
             ),
 
             # Code snippet keywords

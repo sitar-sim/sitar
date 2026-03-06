@@ -141,7 +141,7 @@ A few things to note before running it:
 - C++ code is embedded in `#!sitar $...$` blocks and executed as instantaneous statements.
 - In Sitar, simulation time is represented as a **`(cycle, phase)`** pair. Each cycle has two phases: phase 0 and phase 1. Time advances as:
 `(0,0) -> (0,1) -> (1,0) -> (1,1) -> (2,0) -> ....`
-- A `#!sitar wait(c, p)` statement suspends the module for c full cycles plus p additional phases. So `#!sitar wait(2,0)` advances by exactly 2 cycles, while `#!sitar wait(1,1)` advances by one full cycle and one extra phase. This is covered in detail in [Timing and Execution](timing_and_execution_model.md)
+- A `#!sitar wait(c, p)` statement suspends the module for `c` full cycles plus `p` additional phases. So `#!sitar wait(2,0)` advances by exactly 2 cycles, while `#!sitar wait(1,1)` advances by one full cycle and one extra phase. This is covered in detail in [Timing and Execution](timing_and_execution_model.md)
 - The built-in `#!sitar log` object works like a C++ `ostream`. Passing `#!sitar endl` inserts a newline and automatically prepends a `(cycle, phase) module_name` prefix to each line, which is very handy for identifying the source and time of log messages in a large model.
 - `#!sitar stop simulation` halts the entire simulation at the end of the current phase.
 
@@ -152,6 +152,10 @@ Translate and compile from the directory containing `hello.sitar`:
 ```bash
 sitar translate hello.sitar
 sitar compile
+```
+
+This creates an executable called `sitar_sim`. To run the simulation:
+```bash
 ./sitar_sim
 ```
 
@@ -198,4 +202,4 @@ The `examples/` folder in the repository contains ready-to-run models covering a
 
 ## What's Next
 
-With Sitar installed and working, let's move on to [Basic Concepts: Components](components_modules_nets.md) to understand the structural building blocks of a Sitar model.
+With Sitar installed and working, let's move on to [Basic Concepts](components_modules_nets.md) to understand the structural building blocks of a Sitar model.

@@ -70,10 +70,11 @@ nav:
       - Getting Started: getting_started.md
 
   - Basic Concepts:
-      - Components: components_modules_nets.md
-      - Timing and Execution: timing_and_execution_model.md
+      - Modules and Nets: components_modules_nets.md
+      - Timing: timing_and_execution_model.md
       - Module Behavior: module_behavior.md
-      - Tokens, Input and Output: io_and_tokens.md
+      - Tokens: io_and_tokens.md
+      - Execution Model: execution_model.md
 
   - Language and Examples:
       - Describing Structure:
