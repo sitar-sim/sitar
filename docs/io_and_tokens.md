@@ -63,6 +63,8 @@ Notice the one-cycle latency: `a` pushes in phase 1 of cycle 0, and `b` receives
 **Pushing** a token (in phase 1):
 
 ```sitar
+//push must happen in phase 1
+wait until (this_phase == 1);
 $
 if (outp.push(t))   // copies t onto the net; returns true if space was available
     log << endl << "pushed: " << t.info();
@@ -72,23 +74,44 @@ $;
 **Pulling** a token (in phase 0):
 
 ```sitar
+//pull must happen in phase 0
+wait until (this_phase == 0);
 $
 if (inp.pull(t))    // copies from net into t; returns true if a token was available
     log << endl << "pulled: " << t.info();
 $;
 ```
 
-Both `push` and `pull` are non-blocking. `push` returns `false` if the net is full. `pull` returns `false` if the net is empty. Neither raises an error on failure.
+- Both `push` and `pull` are non-blocking, best-effort methods. 
+- Both methods take the token object `t` as argument. A `push` copies the value of `t` onto the net, incrementing the net's occupancy by one. If the net was already full to its capacity, the method does not update the net, and returns `false`.    
+- A `pull` pops the oldest token on a net (if one exists), decrement's the nets occupancy by one, and copies the value of that token to `t.` If the net was empty, it just returns `false`. 
+
 
 !!! warning "Phase discipline"
-    Sitar does not enforce phase discipline at runtime. Calling `push` in phase 0 or `pull` in phase 1 will not raise a runtime error, but will produce incorrect results. In parallel execution, such violations cause non-deterministic behavior since modules execute in arbitrary order within a phase. In sequential execution, violations may appear to work coincidentally depending on module execution order, but correctness is not guaranteed. Always push in phase 1 and pull in phase 0.
+    **Sitar does not enforce phase discipline at runtime.** This is to keep the kernel simple, and to provide flexibility in using different execution schemes for the advanced user for specific models. Calling `push` in phase 0 or `pull` in phase 1 will not raise a runtime error, but may produce incorrect results when the communication graph differs from the sequence in which the modules are executed in each phase. Following the phase discipline ensures that the execution order among modules within a phase does not affect results, enabling deterministic execution and a clean, simple parallelization approach.
+
+	**It is recommended to always push in phase 1 and pull in phase 0 only.**
 
 
 !!! note "Fixed payload sizes"
     Token width, port width, and net width must all agree at compile time. This is intentional: for the class of synchronous systems Sitar targets, communication channel widths do not change dynamically, and fixed sizes enable efficient, allocation-free data transfer.
 
-
 ---
+
+## Communication Latency of Nets
+
+Nets are intentionally simple: a fixed-capacity FIFO with **no latency parameter**. The **one-cycle minimum latency** for communication between modules arises from the two-phase execution model and is not configurable on the net itself. This keeps the simulation fabric efficient and allocation-free.
+
+Larger integer communication latencies can be modeled by stamping each token with a push timestamp (using the `ID` field or a payload field) and using a conditional pull after inspecting the token at the head of the queue. The `peek` function on an inport allows a module to inspect the front token without consuming it, enabling selective or delayed pulling:
+```sitar
+$
+if (inp.peek(t)) // inspect without consuming
+	if (if this_cycle>=(t.ID+delay))// check timestamp
+		inp.pull(t); // consume only when ready
+$;
+```
+More complex communication patterns such as priority queues, differential latencies, or custom token filtering can be implemented as dedicated intermediary modules with user-defined behavior. This design keeps the core net implementation simple while leaving modeling flexibility to the user.
+
 
 ## Packing and Unpacking Payload Data
 

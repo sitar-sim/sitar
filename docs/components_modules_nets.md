@@ -46,10 +46,13 @@ net net_name : capacity 4
 net net_name : capacity 4 width 2
 ```
 
-!!! note "One reader, one writer"
-    Each net must be connected to exactly one `#!sitar outport` (writer) and exactly one `#!sitar inport` (reader). This restriction is what makes the two-phase execution deterministic and race-free.
+!!! note "**One reader, one writer**"
+    Each net must be connected to exactly one `#!sitar outport` (writer) and exactly one `#!sitar inport` (reader). This restriction is what makes SItar's two-phase execution deterministic and race-free.
 
----
+!!! note "**Nets do not have a latency or delay parameter**"
+	Communication between modules over nets incurs **a minimum one-cycle latency** due to the way Sitar's two-phase execution model is designed, not a property of the net itself. 
+
+	See [Tokens](io_and_tokens.md) and [Advanced Examples](language_and_examples/advanced_examples/communication_channels.md) for a discussion of how larger communication latencies and more complex communication channels (including broadcast, multiplexing and demultiplexing channels) can be modeled.
 
 ## Ports and Connections
 

@@ -3,16 +3,20 @@
 The previous pages introduced modules, nets, time, behavior, and tokens. This page ties them together by explaining how the Sitar simulation kernel actually runs a model step by step.
 
 ---
-
 ## What "Running a Module" Means
 
 Each module has a `run(cycle, phase)` function generated from its behavior block. Calling `run()` on a module **nudges** it: execution proceeds through the behavior until the next `#!sitar wait` statement is reached, at which point the module suspends and control returns to the kernel. The module's execution state (its position in the behavior, all local variables) is preserved between calls.
 
-For a **hierarchical module** (one that contains submodules), `run()` first executes the module's own behavior until a wait, then calls `run()` on each child submodule in turn. This happens recursively down the hierarchy.
+For hierarchical execution, Sitar also provides a `runHierarchical()` function for each module. This first nudges the module's own behavior, then calls `runHierarchical()` on each child submodule in turn, recursively down the hierarchy.
 
-!!! note
-    The kernel only maintains a flat list of all leaf-level modules. The recursive execution through the hierarchy is handled by each module's generated `run()` function. From the kernel's perspective, it simply calls `run()` on the top-level module once per phase.
+!!! note "Kernel behavior and customization"
+    **The kernel maintains a flat list of all modules in the system**, as well as a reference to `TOP` which in turn holds references to its child modules and so on. 
 
+	- **By default:**, the kernel calls `run()` on every module in the flat list once per phase. The execution order among modules within a phase does not matter. 
+
+	- **An alternative:** is to call `runHierarchical()` on just `TOP` once per phase, which traverses the entire hierarchy in declaration order.
+
+	The main execution loop is generated as readable C++ code and can be customized by the user to suit specific needs, such as a custom static thread-to-module mapping for parallel execution. This is described in detail in [Enabling Parallel Execution](parallel_execution.md).
 ---
 
 ## The Sequential Execution Loop
@@ -54,13 +58,13 @@ while (cycle < simulation_end_time)
     #pragma omp for
     for (m = 0; m < num_modules; m++)
         module[m].run(cycle, phase)
-    #pragma omp barrier
+    //implicit omp barrier
 
     phase = 1
     #pragma omp for
     for (m = 0; m < num_modules; m++)
         module[m].run(cycle, phase)
-    #pragma omp barrier
+    //implicit omp barrier
 
     cycle = cycle + 1
 }
@@ -97,9 +101,16 @@ sequenceDiagram
 
 ## Modeling Scope and the Moore Restriction
 
-A consequence of the two-phase rule is that Sitar can only model systems where every path from a module's input to its output passes through at least one net (and therefore incurs at least one cycle of latency). This is equivalent to requiring that all inter-module communication is through **Moore-type** components: components whose outputs depend only on their state at the start of a cycle, not on their inputs within the same cycle.
+A consequence of the two-phase rule is that Sitar can only model systems where every path from one module's **input** to the next (a different) module's **input**  passes through at least one net (and therefore incurs at least one cycle of latency). This is equivalent to requiring that all inter-module communication is through **Moore-type** components: components whose outputs depend only on their state at the start of a cycle, not on their inputs within the same cycle.
 
-This restriction rules out purely combinational (zero-latency) paths between separate modules. Such paths can still be modeled by placing the interacting components within a single module as branches of a `#!sitar parallel` block, where execution order is fixed and deterministic.
+This restriction rules out purely combinational (zero-latency) paths between separate modules. Such paths can still be modeled by placing the interacting components within a single module as branches of a `#!sitar parallel` block, where execution order is fixed and deterministic. Each  branch can optionally be wrapped as a `procedure` for modularity. Branches of a parallel block are executed sequentially, and multiple times (if required) until convergence.See [Parallel](language_and_examples/parallel.md) for details on parallel blocks.
 
 !!! note "Summary"
-    Sitar's execution model can be stated in one sentence: run every module once in phase 0, synchronize, run every module once in phase 1, synchronize, and advance the cycle. The two-phase read/write discipline makes this loop correct, deterministic, and trivially parallelizable.
+	**Sitar's execution model in one sentence:** run every module once in phase 0, synchronize, run every module once in phase 1, synchronize, advance the cycle.
+
+	The two-phase read/write discipline makes this loop correct, deterministic, and straightforward to parallelize. The cost is two barrier synchronizations per clock cycle. This overhead is justified when the model is large enough, or has heavy compute in each phase, so that each thread has significant compute work per phase, and the time spent at barriers is small relative to the useful work done between them.
+
+
+## What's Next
+
+With the core concepts and execution model in place, the next step is learning the full Sitar modeling language in detail. The [Language and Examples](language_and_examples/sequence.md) section covers every construct with examples. If you prefer to dive straight into complete working models first, jump to [Basic Examples](language_and_examples/basic_examples/shift_register.md).
