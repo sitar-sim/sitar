@@ -1,0 +1,24 @@
+// A minimal Sitar model.
+// Every Sitar model must have a module named Top - it is the root of the hierarchy.
+// The behavior block describes the module's actions over simulation time.
+// C++ code is embedded inside $...$ blocks.
+// 'log' is the built-in logger; 'endl' inserts a newline with a (cycle,phase) prefix.
+
+// --8<-- [start:model]
+module Top
+    behavior
+        $log<<endl<<"Hello, World!";$;
+        wait(2,0);
+        $log<<endl<<"Hello again, after 2 cycles.";$;
+        wait(3,0);
+        $log<<endl<<"Goodbye!";$;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:model]
+
+// Expected output (./sitar_sim):
+// (0,0)TOP   :Hello, World!
+// (2,0)TOP   :Hello again, after 2 cycles.
+// (5,0)TOP   :Goodbye!
+// Simulation stopped at time (5,0)
