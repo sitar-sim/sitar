@@ -40,9 +40,17 @@ class inport:public base_inport
 			//successful, return 0 otherwise
 			{
 			assert(_net);
-			return getNet()->pull(tok);
+			return (_net->pull(tok));
 			}
-	
+
+			bool peek(token<_width>& tok)
+			//copy a token and return 1 if net is not empty
+			//return 0 otherwise. Do not modify the state of the net.
+			{
+				assert(_net);
+				return (_net->peek(tok));
+			}
+				
 			//return true if there are no tokens
 			//to be pulled
 			bool empty()
