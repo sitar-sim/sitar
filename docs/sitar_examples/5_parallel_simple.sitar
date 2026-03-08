@@ -1,0 +1,155 @@
+// --8<-- [start:model]
+// Four modules connected in a clique.
+// Each module does heavy computation every cycle (busy-wait, ~1ms).
+// Every COMM_INTERVAL cycles, each module sends a token to one
+// randomly chosen neighbour.
+// COMM_INTERVAL is a top-level parameter.
+
+module Top
+    submodule sys : System<5>   // COMM_INTERVAL = 5
+end module
+
+module System
+    parameter int COMM_INTERVAL = 5   // send a token every this many cycles
+
+    submodule a : Node<COMM_INTERVAL>
+    submodule b : Node<COMM_INTERVAL>
+    submodule c : Node<COMM_INTERVAL>
+    submodule d : Node<COMM_INTERVAL>
+
+    // nets for every directed pair in the clique
+    net ab : capacity 4 width 4
+    net ac : capacity 4 width 4
+    net ad : capacity 4 width 4
+    net ba : capacity 4 width 4
+    net bc : capacity 4 width 4
+    net bd : capacity 4 width 4
+    net ca : capacity 4 width 4
+    net cb : capacity 4 width 4
+    net cd : capacity 4 width 4
+    net da : capacity 4 width 4
+    net db : capacity 4 width 4
+    net dc : capacity 4 width 4
+
+    // outports of a
+    a.out0 => ab    a.out1 => ac    a.out2 => ad
+    // outports of b
+    b.out0 => ba    b.out1 => bc    b.out2 => bd
+    // outports of c
+    c.out0 => ca    c.out1 => cb    c.out2 => cd
+    // outports of d
+    d.out0 => da    d.out1 => db    d.out2 => dc
+
+    // inports of a
+    a.in0 <= ba     a.in1 <= ca     a.in2 <= da
+    // inports of b
+    b.in0 <= ab     b.in1 <= cb     b.in2 <= db
+    // inports of c
+    c.in0 <= ac     c.in1 <= bc     c.in2 <= dc
+    // inports of d
+    d.in0 <= ad     d.in1 <= bd     d.in2 <= cd
+
+    init
+    $
+    // seed each node's RNG with a unique value
+    a.seed = 1;
+    b.seed = 2;
+    c.seed = 3;
+    d.seed = 4;
+    $
+
+end module
+
+
+module Node
+    parameter int COMM_INTERVAL = 5
+
+    // three outports and three inports (one per neighbour)
+    outport out0, out1, out2 : width 4
+    inport  in0,  in1,  in2  : width 4
+
+    include $#include <ctime>$
+    include $#include <cstdlib>$
+    include $#include "sitar_token_utils.h"$
+
+    decl
+    $
+    int seed;
+    unsigned int tokens_received;
+
+    // busy-wait for approximately 'ms' milliseconds
+    void heavyCompute(int ms)
+    {
+        clock_t start = clock();
+        clock_t duration = (clock_t)(ms * (CLOCKS_PER_SEC / 1000));
+        volatile int x = 0;
+        while ((clock() - start) < duration)
+            x++;   // burn CPU
+    }
+    $
+
+    init
+    $
+    seed = 0;
+    tokens_received = 0;
+    $
+
+    behavior
+    do
+        wait until (this_phase == 0);
+
+        // pull from all inports
+        $
+        token<4> t;
+        int val;
+        outport<4>* outs[3] = { &out0, &out1, &out2 };
+        inport<4>*  ins[3]  = { &in0,  &in1,  &in2  };
+        for (int i = 0; i < 3; i++)
+            if (ins[i]->pull(t))
+            {
+                sitar::unpack(t, val);
+                tokens_received++;
+                log << endl << "received val=" << val
+                    << " (total=" << tokens_received << ")";
+            }
+        $;
+
+        // heavy computation in phase 0
+        $heavyCompute(1);$;  // ~1 ms
+
+        wait until (this_phase == 1);
+
+        // heavy computation in phase 1
+        $heavyCompute(1);$;  // ~1 ms
+
+        // send a token to a random neighbour every COMM_INTERVAL cycles
+        $
+        if (this_cycle % COMM_INTERVAL == 0)
+        {
+            srand(seed + (int)this_cycle);
+            int dest = rand() % 3;
+            token<4> t;
+            int val = (int)this_cycle;
+            sitar::pack(t, val);
+            t.ID = this_cycle;
+            if (outs[dest]->push(t))
+                log << endl << "sent val=" << val << " to out" << dest;
+        }
+        $;
+
+        wait;
+    while (1) end do;
+    end behavior
+
+end module
+// --8<-- [end:model]
+
+// To run in parallel:
+//   sitar translate 5_parallel_simple.sitar
+//   sitar compile --openmp --no-logging
+//   export OMP_NUM_THREADS=4
+//   time ./sitar_sim 20
+//
+// To run serially for comparison:
+//   sitar compile --no-logging
+//   time ./sitar_sim 20

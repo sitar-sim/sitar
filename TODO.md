@@ -32,6 +32,8 @@ inp =>> child.inp
 child.outp =>> outp
 ```
 
+3. Logo
+
 
 
 
