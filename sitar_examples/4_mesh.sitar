@@ -1,0 +1,172 @@
+// NxM toroidal mesh interconnect.
+//
+// Each node (row, col) has two outports (East, South) and two inports (East, South).
+// Nets are directional: net_e[i][j] carries a token going East from node[i][j]
+// to node[i][j+1]. Connections wrap around (toroidal) so every node always has
+// a valid East and South neighbor.
+//
+// Routing: XY (dimension-order). A token in transit at node (r,c) destined for
+// (dr,dc) is forwarded East while dc != c, then South until dr == r (which always
+// succeeds in a toroidal topology with wrap-around South connections).
+//
+// Each node injects one new token every INJECT_EVERY cycles to a random destination.
+// Simulation runs for RUN_CYCLES cycles then stops.
+//
+// Expected output (N=3, M=3, INJECT_EVERY=4, RUN_CYCLES=20):
+// (0,1) TOP.mesh.node[0][0] : (0,0) inject to (2,1)
+// (1,0) TOP.mesh.node[0][1] : (0,1) fwd E -> (2,1)
+// ...
+// (4,0) TOP.mesh.node[2][1] : (2,1) consumed data=0
+// ...
+
+// --8<-- [start:top]
+module Top
+    submodule mesh : Mesh<3, 3>
+end module
+// --8<-- [end:top]
+
+
+// --8<-- [start:structure]
+module Mesh
+    parameter int N = 3           // rows
+    parameter int M = 3           // columns
+    parameter int INJECT_EVERY = 4
+    parameter int RUN_CYCLES   = 20
+
+    submodule_array node[N][M] : MeshNode<N, M, INJECT_EVERY, RUN_CYCLES>
+
+    // East-going nets: net_e[i][j] connects node[i][j].out_e to node[i][j+1].in_e
+    net_array net_e[N][M] : capacity 2 width 12
+
+    // South-going nets: net_s[i][j] connects node[i][j].out_s to node[i+1][j].in_s
+    net_array net_s[N][M] : capacity 2 width 12
+
+    // East connections (columns 0..M-2)
+    for i in 0 to (N-1)
+        for j in 0 to (M-2)
+            node[i][j].out_e      => net_e[i][j]
+            node[i][(j+1)].in_e   <= net_e[i][j]
+        end for
+    end for
+    // East wrap-around: last column -> first column
+    for i in 0 to (N-1)
+        node[i][(M-1)].out_e => net_e[i][(M-1)]
+        node[i][0].in_e      <= net_e[i][(M-1)]
+    end for
+
+    // South connections (rows 0..N-2)
+    for i in 0 to (N-2)
+        for j in 0 to (M-1)
+            node[i][j].out_s      => net_s[i][j]
+            node[(i+1)][j].in_s   <= net_s[i][j]
+        end for
+    end for
+    // South wrap-around: last row -> first row
+    for j in 0 to (M-1)
+        node[(N-1)][j].out_s => net_s[(N-1)][j]
+        node[0][j].in_s      <= net_s[(N-1)][j]
+    end for
+
+    // Initialize each node with its (row, col) position
+    init $
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < M; j++) {
+            node[i][j].row = i;
+            node[i][j].col = j;
+        }
+    $
+end module
+// --8<-- [end:structure]
+
+
+// --8<-- [start:node]
+module MeshNode
+    parameter int N            = 3
+    parameter int M            = 3
+    parameter int INJECT_EVERY = 4
+    parameter int RUN_CYCLES   = 20
+
+    inport  in_e  : width 12   // arrives from West (token traveled East)
+    inport  in_s  : width 12   // arrives from North (token traveled South)
+    outport out_e : width 12   // departs to East neighbor
+    outport out_s : width 12   // departs to South neighbor
+
+    include $#include <cstdlib>$
+
+    decl $
+    int  row;       // position, set by parent in init
+    int  col;
+    int  received;  // total tokens consumed at this node
+
+    // Single in-flight packet slot (one packet in transit per cycle)
+    bool      has_pkt;
+    token<12> pkt;
+    int       pkt_dr, pkt_dc, pkt_data;
+    bool      ok;
+    $
+    init $row = 0;  col = 0;  received = 0;  has_pkt = false;$
+
+    behavior
+        do
+            // ---- Phase 0: receive ----
+            // Accept at most one incoming packet per cycle (East inport first).
+            wait until (this_phase == 0);
+            $
+            // Simulate per-cycle compute work (placeholder)
+            volatile int dummy = row * M + col + (int)this_cycle;
+            (void)dummy;
+
+            token<12> t;
+            if (!has_pkt && (in_e.pull(t) || in_s.pull(t))) {
+                sitar::unpack(t, pkt_dr, pkt_dc, pkt_data);
+                if (pkt_dr == row && pkt_dc == col) {
+                    // Packet has arrived at its destination
+                    log << endl
+                        << "(" << row << "," << col
+                        << ") consumed data=" << pkt_data;
+                    received++;
+                } else {
+                    // Load into transit slot for forwarding in phase 1
+                    pkt     = t;
+                    has_pkt = true;
+                }
+            }
+            $;
+
+            // ---- Phase 1: forward or inject ----
+            wait until (this_phase == 1);
+            $
+            if (has_pkt) {
+                // XY routing: move East until column matches, then South
+                ok = (pkt_dc != col) ? out_e.push(pkt) : out_s.push(pkt);
+                if (ok) {
+                    log << endl
+                        << "(" << row << "," << col
+                        << ") fwd " << (pkt_dc != col ? "E" : "S")
+                        << " to (" << pkt_dr << "," << pkt_dc << ")";
+                    has_pkt = false;
+                }
+                // If push fails (net full), keep packet and retry next cycle
+            } else if ((int)this_cycle % INJECT_EVERY == 0) {
+                // Slot empty: inject a new packet to a random destination
+                srand(row * M + col + (int)this_cycle * 7);
+                int dr = rand() % N;
+                int dc = rand() % M;
+                if (dr != row || dc != col) {
+                    token<12> inj;
+                    int d = row * M + col;   // payload = source node index
+                    sitar::pack(inj, dr, dc, d);
+                    ok = (dc != col) ? out_e.push(inj) : out_s.push(inj);
+                    if (ok)
+                        log << endl
+                            << "(" << row << "," << col
+                            << ") inject to (" << dr << "," << dc << ")";
+                }
+            }
+            $;
+            wait;
+        while (this_cycle < RUN_CYCLES) end do;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:node]

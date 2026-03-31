@@ -1,0 +1,64 @@
+// Demonstrates: parallel block fork-join with branches of different lengths.
+// All branches start simultaneously; the block completes when the last branch
+// terminates or converges.
+//
+// Expected output:
+// (0,0)TOP.m      :start: (0,0)
+// (0,0)TOP.m      :branch C done: (0,0)
+// (1,0)TOP.m      :branch B done: (1,0)
+// (3,0)TOP.m      :branch A done: (3,0)
+// (3,0)TOP.m      :parallel block complete: (3,0)
+// Simulation stopped at time (3,0)
+
+// --8<-- [start:model]
+module Top
+    submodule m : ParallelDemo
+end module
+
+module ParallelDemo
+    behavior
+        $log << endl << "start: " << current_time;$;
+
+        [
+            // Branch A: waits 3 cycles
+            wait(3, 0);
+            $log << endl << "branch A done: " << current_time;$;
+        ||
+            // Branch B: waits 1 cycle
+            wait(1, 0);
+            $log << endl << "branch B done: " << current_time;$;
+        ||
+            // Branch C: instantaneous (no wait)
+            $log << endl << "branch C done: " << current_time;$;
+        ];
+
+        // Execution reaches here only after all branches have terminated
+        $log << endl << "parallel block complete: " << current_time;$;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:model]
+
+
+// --8<-- [start:shared_variable]
+// Parallel blocks can model zero-latency interactions via shared variables.
+// Both branches share the module's member variables directly.
+module ZeroLatencyInteraction
+    decl $int x; int y;$
+    init $x = 0; y = 0;$
+    behavior
+        [
+            // Branch A: sets x, waits for y to be set by Branch B
+            $x = 1;$;
+            wait until (y == 1);
+            $log << endl << "A sees y=" << y;$;
+        ||
+            // Branch B: waits for x to be set by Branch A, then sets y
+            wait until (x == 1);
+            $y = 1;$;
+            $log << endl << "B sees x=" << x;$;
+        ];
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:shared_variable]
