@@ -16,11 +16,11 @@ jobs:
     steps:
       # 1. Get your repository code
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       # 2. Set up Python on the CI machine
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.4.0
         with:
           python-version: "3.11"
 
