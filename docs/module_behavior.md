@@ -91,11 +91,11 @@ The flowchart below traces the execution of the same behavior, showing where the
 flowchart TD
     START(["Start"]) --> S1
 
-    S1(["S1: **code block** $...$"]):::code --> S2_ENTER
+    S1(["S1: code block $...$"]):::code --> S2_ENTER
 
     subgraph S2["S2: do-while (this_cycle < 5)"]
-        S2_1(["S2.1: **wait(1,0)**"]):::wait
-        S2_2(["S2.2: **code block** $...$"]):::code
+        S2_1(["S2.1: wait(1,0)"]):::wait
+        S2_2(["S2.2: code block $...$"]):::code
         S2_CHK{"this_cycle < 5?"}
         S2_1 --> S2_2 --> S2_CHK
     end
@@ -110,11 +110,11 @@ flowchart TD
     subgraph S3_T1["S3.T.1: parallel block"]
         direction LR
         subgraph BranchA["Branch A"]
-            PA1(["S3.T.1.A.1: **wait(2,0)**"]):::wait --> PA2
-            PA2(["S3.T.1.A.2: **code block** $...$"]):::code
+            PA1(["S3.T.1.A.1: wait(2,0)"]):::wait --> PA2
+            PA2(["S3.T.1.A.2: code block $...$"]):::code
         end
         subgraph BranchB["Branch B"]
-            PB1(["S3.T.1.B.1: **code block** $...$"]):::code
+            PB1(["S3.T.1.B.1: code block $...$"]):::code
         end
     end
 
@@ -124,10 +124,10 @@ flowchart TD
     PB1 --> S3_T1_DONE
 
     S3_COND -->|"false"| S3_F1
-    S3_F1(["S3.F.1: **code block** $...$"]):::code --> S4
+    S3_F1(["S3.F.1: code block $...$"]):::code --> S4
 
     S3_T1_DONE((" ")) --> S4
-    S4(["S4: **stop simulation**"]) --> STOP(["End"])
+    S4(["S4: stop simulation"]) --> STOP(["End"])
 
     classDef wait fill:#f4a339,color:#000,stroke:#c47d10
     classDef code fill:#4a90d9,color:#fff,stroke:#2c6fad

@@ -7,6 +7,7 @@
 __pycache__
 log.txt
 # MkDocs generated documentation
+.venv/
 generated_site
 **/*.egg-info/
 **/__pycache__/
