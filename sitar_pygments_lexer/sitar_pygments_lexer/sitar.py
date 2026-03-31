@@ -26,6 +26,8 @@ class SitarLexer(RegexLexer):
     aliases = ["sitar"]
     filenames = ["*.sitar"]
     mimetypes = ["text/x-sitar"]
+    url = ""
+    version_added = ""
 
     flags = re.MULTILINE | re.UNICODE
 
