@@ -1,0 +1,72 @@
+// Demonstrates: if-else with two branches, if without else,
+// and the `not` keyword for logical negation.
+//
+// Expected output:
+// (0,0)TOP.m      :count=0: even
+// (1,0)TOP.m      :count=1: odd
+// (2,0)TOP.m      :count=2: even
+// (3,0)TOP.m      :count=3: odd
+// (4,0)TOP.m      :count=4: even
+// Simulation stopped at time (5,0)
+
+// --8<-- [start:model]
+module Top
+    submodule m : IfElse
+end module
+
+module IfElse
+    decl $int count;$
+    init $count = 0;$
+    behavior
+        do
+            // if-else: executes one of two branches based on condition
+            if (count % 2 == 0) then
+                $log << endl << "count=" << count << ": even";$;
+            else
+                $log << endl << "count=" << count << ": odd";$;
+            end if;
+
+            $count = count + 1;$;
+            wait(1, 0);
+        while (count < 5) end do;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:model]
+
+
+// --8<-- [start:if_no_else]
+// if without else: the branch only executes when the condition is true
+module IfNoElse
+    decl $int x;$
+    init $x = 10;$
+    behavior
+        wait(3, 0);
+        if (x > 5) then
+            $log << endl << "x=" << x << " is greater than 5";$;
+        end if;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:if_no_else]
+
+
+// --8<-- [start:not_keyword]
+// `not` is a Sitar keyword for logical negation (equivalent to C++ `!`)
+module NotKeyword
+    decl $bool flag;$
+    init $flag = false;$
+    behavior
+        if (not flag) then
+            $log << endl << "flag is false";$;
+        end if;
+        $flag = true;$;
+        if (not flag) then
+            $log << endl << "this branch is skipped";$;
+        else
+            $log << endl << "flag is now true";$;
+        end if;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:not_keyword]

@@ -1872,7 +1872,7 @@ run_procedure_statement
 		E_file<<"\n{ \n ";
 		
 		E_file<<"\n//run procedure statement , line:"<<$s.line;
-		E_file<<"\n"<<name<<".runBehavior(current_time);";
+		E_file<<"\n"<<name<<".run(current_time);";
 		E_file<<"\nif("<<name<<"._terminated==1)";
 		E_file<<"\n{";
 		E_file<<"\n"<<name<<"._resetBehavior();";

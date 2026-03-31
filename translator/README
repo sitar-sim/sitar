@@ -17,7 +17,9 @@ To view/edit sitar grammar and translator:
 	- install java (jdk version 6/7)
 	- launch antlrworks with command:
 	
-		java -jar antlrworks-1.5.jar 
+		java -jar antlrworks-1.4.3.jar 
+    - or the shortcut defined in your bashrc
+        antlrworks
 	
 	- open the grammar files 
 	 	./grammar/sitar.g 

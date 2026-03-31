@@ -1,0 +1,94 @@
+// Demonstrates: procedure declaration, instantiation inside a module,
+// invocation with `run`, nested procedures, and parameterized procedures.
+//
+// Expected output (basic):
+// (1,0)TOP.m      :fetch  at (1,0)
+// (2,0)TOP.m      :execute at (2,0)
+// (3,0)TOP.m      :fetch  at (3,0)
+// (4,0)TOP.m      :execute at (4,0)
+// ...
+
+// --8<-- [start:basic]
+module Top
+    submodule m : ProcDemo
+end module
+
+module ProcDemo
+    // Declare procedure instances inside the module
+    procedure fetch   : Fetch
+    procedure execute : Execute
+    behavior
+        do
+            run fetch;     // suspend until Fetch's behavior terminates
+            run execute;   // then suspend until Execute's behavior terminates
+        while (this_cycle < 4) end do;
+        stop simulation;
+    end behavior
+end module
+
+procedure Fetch
+    behavior
+        wait(1, 0);
+        $log << endl << "fetch  at " << current_time;$;
+    end behavior
+end procedure
+
+procedure Execute
+    behavior
+        wait(1, 0);
+        $log << endl << "execute at " << current_time;$;
+    end behavior
+end procedure
+// --8<-- [end:basic]
+
+
+// --8<-- [start:parameterized]
+// Procedures accept parameters using the same syntax as modules.
+procedure Delay
+    parameter int N = 1
+    behavior
+        wait(N, 0);
+        $log << endl << "Delay(" << N << ") done at " << current_time;$;
+    end behavior
+end procedure
+
+module WithParamProcs
+    procedure short_d : Delay<2>    // N=2
+    procedure long_d  : Delay<5>    // N=5
+    behavior
+        run short_d;
+        run long_d;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:parameterized]
+
+
+// --8<-- [start:nested]
+// A procedure may declare and invoke sub-procedures.
+// Recursive calls are not allowed.
+procedure Level1
+    procedure sub : Level2
+    behavior
+        $log << endl << "Level1 start at " << current_time;$;
+        wait(1, 0);
+        run sub;    // invoke sub-procedure
+        $log << endl << "Level1 done  at " << current_time;$;
+    end behavior
+end procedure
+
+procedure Level2
+    behavior
+        $log << endl << "Level2 at " << current_time;$;
+        wait(1, 0);
+    end behavior
+end procedure
+
+module NestedProcDemo
+    procedure p : Level1
+    behavior
+        run p;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:nested]

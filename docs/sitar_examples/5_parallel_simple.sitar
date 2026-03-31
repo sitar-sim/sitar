@@ -70,7 +70,6 @@ module Node
 
     include $#include <ctime>$
     include $#include <cstdlib>$
-    include $#include "sitar_token_utils.h"$
 
     decl
     $

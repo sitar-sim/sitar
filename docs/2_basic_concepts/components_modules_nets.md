@@ -52,7 +52,7 @@ net net_name : capacity 4 width 2
 !!! note "**Nets do not have a latency or delay parameter**"
 	Communication between modules over nets incurs **a minimum one-cycle latency** due to the way Sitar's two-phase execution model is designed, not a property of the net itself. 
 
-	See [Tokens](io_and_tokens.md) and [Advanced Examples](language_and_examples/advanced_examples/communication_channels.md) for a discussion of how larger communication latencies and more complex communication channels (including broadcast, multiplexing and demultiplexing channels) can be modeled.
+	See [Tokens](io_and_tokens.md) for more on token-based communication. The [Router](../4_examples/basic_examples/router.md) and [Mesh](../4_examples/advanced_examples/mesh.md) examples show how more complex communication patterns (address-based routing, multi-hop forwarding, multiplexing) can be built from nets and ports.
 
 ## Ports and Connections
 

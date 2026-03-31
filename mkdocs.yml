@@ -59,6 +59,8 @@ markdown_extensions:
   - attr_list
   - pymdownx.tasklist:
       custom_checkbox: true
+hooks:
+  - docs/hooks/sitar_download.py
 plugins:
   - search
 extra_css:
@@ -70,52 +72,48 @@ nav:
       - Getting Started: getting_started.md
 
   - Basic Concepts:
-      - Modules and Nets: components_modules_nets.md
-      - Timing: timing_and_execution_model.md
-      - Module Behavior: module_behavior.md
-      - Tokens: io_and_tokens.md
-      - Execution Model: execution_model.md
+      - Modules and Nets: 2_basic_concepts/components_modules_nets.md
+      - Timing: 2_basic_concepts/timing_and_execution_model.md
+      - Module Behavior: 2_basic_concepts/module_behavior.md
+      - Tokens: 2_basic_concepts/io_and_tokens.md
+      - Execution Model: 2_basic_concepts/execution_model.md
 
   - Language and Examples:
       - Describing Structure:
-          - Modules: language_and_examples/modules.md
-          - Nets and Ports: language_and_examples/nets_and_ports.md
-          - Hierarchy: language_and_examples/hierarchy.md
-          - Parameters: language_and_examples/parameters.md
-          - Regular Structures: language_and_examples/regular_structures_for_loops.md
+          - Modules and hierarchy: 3_language_and_examples/modules_and_hierarchy.md
+          - Nets, ports, and connections: 3_language_and_examples/nets_and_ports.md
+          - Parameters and templates: 3_language_and_examples/parameters_and_templates.md
+          - Regular structures: 3_language_and_examples/regular_structures.md
 
       - Describing Behavior:
-          - Sequence: language_and_examples/sequence.md
-          - Atomic and Compound Statements: language_and_examples/atomic_and_compound_statements.md
-          - Code Blocks: language_and_examples/code_blocks.md
-          - Wait: language_and_examples/wait.md
-          - Log: language_and_examples/logging.md
-          - If-Else: language_and_examples/if_else.md
-          - Do-While: language_and_examples/do_while.md
-          - Parallel: language_and_examples/parallel.md
-          - Procedures: language_and_examples/procedures.md
-
-      - Useful Constructs:
-          - Templates: language_and_examples/templates.md
-          - Advanced Logging: language_and_examples/advanced_logging.md
+          - Sequences and statements: 3_language_and_examples/sequence.md
+          - Code blocks: 3_language_and_examples/code_blocks.md
+          - Wait: 3_language_and_examples/wait.md
+          - Logging: 3_language_and_examples/logging.md
+          - If-else: 3_language_and_examples/if_else.md
+          - Do-while: 3_language_and_examples/do_while.md
+          - Parallel blocks: 3_language_and_examples/parallel.md
+          - Procedures: 3_language_and_examples/procedures.md
+          - Procedures for I/O: 3_language_and_examples/io_procedures.md
 
   - Examples:
       - Basic Examples:
-          - Shift Register: language_and_examples/basic_examples/shift_register.md
-          - State Machine: language_and_examples/basic_examples/state_machine.md
-          - Producer Consumer: language_and_examples/basic_examples/producer_consumer.md
+          - Shift Register: 4_examples/basic_examples/shift_register.md
+          - State Machine: 4_examples/basic_examples/state_machine.md
+          - Producer Consumer: 4_examples/basic_examples/producer_consumer.md
+          - Router: 4_examples/basic_examples/router.md
 
       - Advanced Examples:
-          - Processor and Memory: language_and_examples/advanced_examples/processor_model.md
-          - Mesh: language_and_examples/advanced_examples/mesh.md
+          - Processor and Memory: 4_examples/advanced_examples/processor_model.md
+          - Mesh: 4_examples/advanced_examples/mesh.md
 
   - Parallel Execution:
-      - Enabling Parallel Execution: parallel_execution.md
-      - Measuring Speedup: speedups.md
+      - Enabling Parallel Execution: 5_parallel_execution/parallel_execution.md
+      - Measuring Speedup: 5_parallel_execution/speedups.md
 
   - How Sitar Works:
       - Translation: how_sitar_works/translation.md
-      - Execution Semantics: how_sitar_works/execution_semantics.md
+      - Kernel and execution: how_sitar_works/kernel.md
 
   - More About Sitar:
       - References: references.md

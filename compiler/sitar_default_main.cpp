@@ -162,15 +162,16 @@ void setOstream(sitar::module* m, std::ostream* stream)
 }
 
 //hierarchical version of setOstream
+//sets the log stream for a module and all its descendants,
+//including nested submodules and procedures at every level.
 void setHierarchicalOstream(sitar::module* m, std::ostream* stream)
 {
 	m->log.setOstream(stream);
 	std::map<std::string,sitar::module*>::const_iterator it;
 	for(it=m->_submodules.begin();it!=m->_submodules.end();it++)
-	{
-		sitar::module* child=it->second;
-		setHierarchicalOstream(child, stream);
-	}
+		setHierarchicalOstream(it->second, stream);
+	for(it=m->_procedures.begin();it!=m->_procedures.end();it++)
+		setHierarchicalOstream(it->second, stream);
 }
 
 void flattenHierarchy(std::vector<sitar::module*>* module_list, sitar::module* this_module)

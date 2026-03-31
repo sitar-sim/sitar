@@ -21,7 +21,7 @@ end module
 
 When a module has a `#!sitar behavior` block, that block is a **sequence of statements** separated by semicolons, executing one by one from top to bottom. Some statements are instantaneous. Others (such as `#!sitar wait`) suspend the module for some amount of simulation time. When a module suspends, its full execution state is preserved and control returns to the simulation kernel. When the module is next nudged, execution resumes exactly where it left off.
 
-The same structure applies to `#!sitar procedure` bodies. A procedure is a named, reusable sequence that can be invoked from within a module's behavior using `#!sitar run`. Procedures are described in detail in [Procedures](language_and_examples/procedures.md).
+The same structure applies to `#!sitar procedure` bodies. A procedure is a named, reusable sequence that can be invoked from within a module's behavior using `#!sitar run`. Procedures are described in detail in [Procedures](../3_language_and_examples/procedures.md).
 
 ---
 
@@ -155,7 +155,7 @@ A sequence at any level is in one of four states at any point during simulation:
 
 ## Overview of Statements
 
-The table below gives a brief overview of all available statements. Each is covered in detail with examples in the [Describing Behavior](language_and_examples/sequence.md) section.
+The table below gives a brief overview of all available statements. Each is covered in detail with examples in the [Describing Behavior](../3_language_and_examples/sequence.md) section.
 
 | Statement | Type | Description |
 |-----------|------|-------------|
@@ -170,7 +170,7 @@ The table below gives a brief overview of all available statements. Each is cove
 | `#!sitar [ ... ||... ]` | compound | Parallel block (fork-join) |
 | `#!sitar run p` | compound | Invoke procedure `p`; completes when `p` terminates |
 
-Embedded C++ code can also appear in three structural positions outside the behavior block: `#!sitar include $...$` for header includes, `#!sitar decl $...$` for member declarations, and `#!sitar init $...$` for constructor initialization. These are covered in [Code Blocks](language_and_examples/code_blocks.md).
+Embedded C++ code can also appear in three structural positions outside the behavior block: `#!sitar include $...$` for header includes, `#!sitar decl $...$` for member declarations, and `#!sitar init $...$` for constructor initialization. These are covered in [Code Blocks](../3_language_and_examples/code_blocks.md).
 
 ---
 

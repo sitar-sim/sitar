@@ -86,31 +86,48 @@ Set `OMP_NUM_THREADS` to the number of modules (or a divisor of it) for best loa
 
 ## Customizing Module-to-Thread Mapping
 
-By default, Sitar flattens the entire hierarchy and distributes modules round-robin across threads. For some models you may want a specific static assignment: for example, placing communicating modules on the same thread to reduce synchronization overhead, or isolating a heavy module on its own thread.
+By default, `flattenHierarchy` collects every module in the hierarchy — including container modules that have no ongoing behavior — and distributes them round-robin across threads. For most models this is fine, but for large regular structures (such as an N×M mesh) it is more efficient to run only the leaf compute modules in parallel and leave structural container modules out of the list entirely.
 
 To do this, supply a custom `main.cpp` at compile time:
 
 ```bash
-sitar compile -m 5_parallel_custom_main.cpp --openmp --logging
+sitar compile -m custom_main.cpp --openmp --no-logging
 ```
 
-The key function in the custom main is the module list construction. Instead of calling `flattenHierarchy`, you build the list explicitly:
+### Selecting specific modules by name
+
+For small models with named submodules, build the list explicitly:
 
 ```cpp
 vector<module*> modules_to_run;
-
-// Group 0: a, b, c  -- will land on thread 0 with OMP_NUM_THREADS=2
 modules_to_run.push_back(&TOP->sys.a);
 modules_to_run.push_back(&TOP->sys.b);
 modules_to_run.push_back(&TOP->sys.c);
-
-// Group 1: d  -- will land on thread 1
 modules_to_run.push_back(&TOP->sys.d);
 ```
 
-With `OMP_NUM_THREADS=2` and `schedule(static)`, OpenMP assigns the first half of the list to thread 0 and the second half to thread 1. The rest of the parallel loop is identical to the default.
+With `OMP_NUM_THREADS=2` and `schedule(static)`, OpenMP assigns the first half of the list to thread 0 and the second half to thread 1.
 
-The full custom main for this example is at `docs/sitar_examples/5_parallel_custom_main.cpp`.
+### Selecting all children of a parent (for arrays)
+
+For models that use `submodule_array` — where individual instances cannot be named explicitly in C++ — iterate over the parent module's `_submodules` map instead:
+
+```cpp
+void buildModuleList(vector<sitar::module*>* list, sitar::module* parent)
+{
+    for (auto it = parent->_submodules.begin();
+              it != parent->_submodules.end(); ++it)
+        list->push_back(it->second);
+}
+
+// In main, after instantiating TOP:
+vector<sitar::module*> modules_to_run;
+buildModuleList(&modules_to_run, &(TOP->system));
+```
+
+This adds all direct children of `system` (i.e., all `node[i][j]` instances in a mesh) without naming them individually. `TOP` and `system` are left out of the list; they run implicitly via `runHierarchical` in serial mode, or are simply unused if they have no ongoing behavior.
+
+For a two-level hierarchy (e.g., the children of `system` are themselves arrays), call `buildModuleList` recursively or iterate two levels deep as needed.
 
 ---
 
@@ -164,4 +181,4 @@ $srand(seed + (int)this_cycle);$;
 
 ## What's Next
 
-Return to the [Language and Examples](language_and_examples/sequence.md) section to learn the full Sitar modeling language, or jump directly to [Advanced Examples](language_and_examples/advanced_examples/processor_model.md) for complete working models.
+Return to the [Language and Examples](../3_language_and_examples/sequence.md) section to learn the full Sitar modeling language, or jump directly to [Advanced Examples](../4_examples/advanced_examples/processor_model.md) for complete working models.

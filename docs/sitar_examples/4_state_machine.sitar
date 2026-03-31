@@ -1,0 +1,153 @@
+// Traffic light controller: two interacting Moore-type synchronous state machines.
+//
+// Intersection of a main road (higher priority, longer green) and a side road.
+// Each road is modeled as a separate module whose output (light color) is
+// determined only by its current state — the Moore property.
+//
+// Coordination: Main sends a zero-width signal token to Side when it enters RED.
+// Side replies with a signal token when it re-enters RED, releasing Main.
+//
+// Timing:
+//   Main GREEN  : 15 cycles
+//   Main YELLOW :  3 cycles
+//   Side GREEN  :  8 cycles
+//   Side YELLOW :  3 cycles
+//
+// Expected output (3 complete main cycles):
+// (0,0)  TOP.ctrl.main : [MAIN] GREEN  (main=GREEN  side=RED)
+// (15,0) TOP.ctrl.main : [MAIN] YELLOW (main=YELLOW side=RED)
+// (18,0) TOP.ctrl.main : [MAIN] RED
+// (19,0) TOP.ctrl.side : [SIDE] GREEN  (main=RED    side=GREEN)
+// (27,0) TOP.ctrl.side : [SIDE] YELLOW (main=RED    side=YELLOW)
+// (30,0) TOP.ctrl.side : [SIDE] RED -- releasing main
+// (31,0) TOP.ctrl.main : [MAIN] GREEN
+// ... (two more complete sequences)
+// Simulation stopped at time (93,...)
+
+
+// --8<-- [start:top]
+module Top
+    submodule ctrl : TrafficController
+end module
+
+module TrafficController
+    submodule main : MainRoad
+    submodule side : SideRoad
+
+    // Signal nets: zero-width, capacity 1
+    net n_main_release : capacity 1   // Main -> Side: "you may go"
+    net n_side_release : capacity 1   // Side -> Main: "I am done"
+
+    main.to_side  => n_main_release
+    side.from_main <= n_main_release
+    side.to_main  => n_side_release
+    main.from_side <= n_side_release
+end module
+// --8<-- [end:top]
+
+
+// --8<-- [start:main_fsm]
+module MainRoad
+    outport to_side
+    inport  from_side
+
+    decl $
+    // Moore FSM state — output is a function of this variable only
+    enum State { GREEN, YELLOW, RED };
+    State  state;
+    token<> sig;   // zero-width signal token
+    bool    ok;
+    int     seq;   // counts completed GREEN-YELLOW-RED sequences
+    $
+    init $state = GREEN; seq = 0;$
+
+    behavior
+        do
+            // ---- GREEN ----
+            if (state == GREEN) then
+                $log << endl << "[MAIN] GREEN  (main=GREEN  side=RED)";$;
+                wait(15, 0);
+                $state = YELLOW;$;
+            end if;
+
+            // ---- YELLOW ----
+            if (state == YELLOW) then
+                $log << endl << "[MAIN] YELLOW (main=YELLOW side=RED)";$;
+                wait(3, 0);
+                $state = RED;$;
+            end if;
+
+            // ---- RED ----
+            if (state == RED) then
+                $log << endl << "[MAIN] RED -- releasing side road";$;
+
+                // Signal Side to proceed (phase 1 push)
+                $ok = false;$;
+                do
+                    wait until (this_phase == 1);
+                    $ok = to_side.push(sig);$;
+                    if (not ok) then wait end if;
+                while (not ok) end do;
+
+                // Wait for Side to complete its sequence
+                wait until (from_side.peek());
+                $from_side.pull(sig);$;
+
+                $seq++; state = GREEN;$;
+                if (seq >= 3) then
+                    stop simulation;
+                end if;
+            end if;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:main_fsm]
+
+
+// --8<-- [start:side_fsm]
+module SideRoad
+    inport  from_main
+    outport to_main
+
+    decl $
+    enum State { RED, GREEN, YELLOW };
+    State  state;
+    token<> sig;
+    bool    ok;
+    $
+    init $state = RED;$
+
+    behavior
+        do
+            // ---- RED: wait for main to release ----
+            if (state == RED) then
+                $log << endl << "[SIDE] RED -- waiting for main";$;
+                wait until (from_main.peek());
+                $from_main.pull(sig); state = GREEN;$;
+            end if;
+
+            // ---- GREEN ----
+            if (state == GREEN) then
+                $log << endl << "[SIDE] GREEN  (main=RED  side=GREEN)";$;
+                wait(8, 0);
+                $state = YELLOW;$;
+            end if;
+
+            // ---- YELLOW ----
+            if (state == YELLOW) then
+                $log << endl << "[SIDE] YELLOW (main=RED  side=YELLOW)";$;
+                wait(3, 0);
+                $state = RED;$;
+
+                // Signal Main that we are done
+                $ok = false;$;
+                do
+                    wait until (this_phase == 1);
+                    $ok = to_main.push(sig);$;
+                    if (not ok) then wait end if;
+                while (not ok) end do;
+            end if;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:side_fsm]

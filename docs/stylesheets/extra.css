@@ -85,3 +85,15 @@
 .md-content h1 {
   font-weight: 700;
 }
+
+/* =========================================================
+   Sitar source download link — appears below each snippet code block
+   ========================================================= */
+
+.sitar-dl-link {
+  margin-top: -0.6em;     /* tuck it up slightly below the code block */
+  margin-bottom: 1em;
+  font-size: 0.75rem;
+  text-align: right;
+  color: var(--md-default-fg-color--light);
+}

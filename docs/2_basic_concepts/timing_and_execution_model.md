@@ -13,7 +13,7 @@ Time advances strictly in the order:
 ```
 
 <!-- FIGURE PLACEHOLDER: sitar_modules_and_time.png - the two-phase clock diagram -->
-![Sitar time model](assets/images/sitar_modules_and_time.png "Two-phase time model")
+![Sitar time model](../assets/images/sitar_modules_and_time.png "Two-phase time model")
 
 Inside a model, the current time is accessible as a variable `current_time` within a module. The cycle and phase components can be read individually using `current_time.cycle()` and `current_time.phase()`:
 
@@ -58,7 +58,7 @@ sequenceDiagram
 !!! tip "Zero-latency communication"
     Components that must interact with zero latency can be placed together inside a single module as branches of a `#!sitar parallel` block. Within a module, branches execute in a fixed, deterministic order and may run multiple times within a phase until convergence. They are not subject to the one-cycle latency constraint that applies across nets. 
 
-	See [Module Behavior](module_behavior.md) for an overview of parallel blocks, and [Parallel](language_and_examples/parallel.md) for the full details.
+	See [Module Behavior](module_behavior.md) for an overview of parallel blocks, and [Parallel](../3_language_and_examples/parallel.md) for the full details.
 ---
 
 ## Wait Statements
