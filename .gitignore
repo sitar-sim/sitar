@@ -8,8 +8,7 @@ __pycache__
 log.txt
 # MkDocs generated documentation
 .venv/
-.claude
-CLAUDE.md
+.claude/
 generated_site
 **/*.egg-info/
 **/__pycache__/

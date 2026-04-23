@@ -1,34 +1,56 @@
-This documentation has been generated using mkdocs.
+Building the Sitar documentation
+================================
 
-#To install mkdocs (on linux):
+The docs are built with mkdocs. The build needs Python 3 and a few packages,
+all listed in `requirements.txt`.
 
-Create virtual environment
-```
-python3 -m venv venv
-```
+Commands below use two working directories:
+  - Run pip commands from this `docs/` directory.
+  - Run `mkdocs` commands from the repo root (where `mkdocs.yml` lives).
 
-Activate it
-```
-source venv/bin/activate
-```
 
-Install from requirements.txt
-```
-pip install -r requirements.txt
-```
+One-time setup
+--------------
 
-To deactivate later: 
-```
-deactivate
-```
+From the repo root:
 
-# To build docs
-```
-mkdocs build
-```
+    python3 -m venv .venv
 
-# Docs preview:
-```
-  mkdocs serve
-```
-Then open the given localhost url in a browser.
+Activate the virtualenv (do this once per shell session):
+
+    source .venv/bin/activate
+
+Install the dependencies. This also pulls in the custom Pygments lexer used
+for Sitar syntax highlighting (the `-e ../sitar_pygments_lexer` line inside
+`requirements.txt`):
+
+    cd docs
+    pip install -r requirements.txt
+    cd ..
+
+
+Build the static site
+---------------------
+
+With the venv active, from the repo root:
+
+    mkdocs build
+
+The output goes to `generated_site/`.
+
+
+Preview locally
+---------------
+
+With the venv active, from the repo root:
+
+    mkdocs serve
+
+Then open the printed localhost URL in a browser. Pages rebuild live as you
+edit `.md` files.
+
+
+Done for the day
+----------------
+
+    deactivate

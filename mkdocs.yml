@@ -105,6 +105,7 @@ nav:
 
       - Advanced Examples:
           - Processor and Memory: 4_examples/advanced_examples/processor_model.md
+          - Pipelined Processor: 4_examples/advanced_examples/pipelined_processor.md
           - Mesh: 4_examples/advanced_examples/mesh.md
 
   - Parallel Execution:

@@ -79,7 +79,7 @@ class logger
 			{
 				_logstream=NULL;
 				_logON = true;
-				_lastTokenWasEndl=true;
+				_lastTokenWasEndl=false;
 				_prefix="";
 				useDefaultPrefix = true;
 				

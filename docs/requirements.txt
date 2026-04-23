@@ -5,3 +5,9 @@ mkdocs-material-extensions==1.3.1
 mkdocs-simple-hooks==0.1.5
 pymdown-extensions==10.20.1
 Pygments==2.19.2
+
+# Custom Pygments lexer that provides syntax highlighting for Sitar code
+# blocks (```sitar ... ```) and the sitar-download button. Path is relative
+# to this requirements file -- install from the docs/ directory:
+#     pip install -r requirements.txt
+-e ../sitar_pygments_lexer
