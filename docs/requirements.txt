@@ -10,4 +10,4 @@ Pygments==2.19.2
 # blocks (```sitar ... ```) and the sitar-download button. Path is relative
 # to this requirements file -- install from the docs/ directory:
 #     pip install -r requirements.txt
--e ../sitar_pygments_lexer
+# -e ../sitar_pygments_lexer
