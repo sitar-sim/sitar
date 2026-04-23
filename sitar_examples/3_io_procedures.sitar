@@ -1,0 +1,177 @@
+// Demonstrates using procedures to encapsulate recurring port I/O patterns.
+//
+// Problem: a Merger module must wait for a token on each of two inports,
+// combine the values, and push the result. The wait/pull/push retry loops
+// repeat identically for every port. Extracting them into procedures keeps
+// the module behavior concise and makes the I/O contracts explicit.
+//
+// Key patterns shown:
+//   - Port-pointer pattern: procedure holds a C++ pointer to its associated port,
+//     set by the parent module in init.
+//   - Shared variables: procedure decl variables (tok, pulled) are accessible to the
+//     parent after run completes — the parent reads the received token directly.
+//   - Parallel I/O: [run get_a || run get_b] waits for tokens on both ports
+//     simultaneously; the parallel block completes only when both have succeeded.
+//
+// Expected output:
+// (1,0) TOP.sys.merger : merged 0 + 0 = 0
+// (2,0) TOP.sys.merger : merged 1 + 2 = 3
+// (3,0) TOP.sys.merger : merged 2 + 4 = 6
+// ...
+// Simulation stopped at time (11,0)
+
+
+// --8<-- [start:get_token]
+// GetToken: waits for one token from a designated inport and pulls it into tok.
+// The port is not declared in the procedure — the parent passes a pointer in init.
+procedure GetToken
+    parameter int W = 4
+
+    decl $
+    inport<W>* src;   // pointer to the associated inport — set by parent
+    token<W>   tok;   // result: the received token, readable by parent after run
+    bool       pulled;
+    $
+    init $src = nullptr;  pulled = false;$
+
+    behavior
+        $pulled = false;$;
+        do
+            wait until (this_phase == 0);
+            $pulled = src->pull(tok);$;
+            if (not pulled) then wait end if;
+        while (not pulled) end do;
+        // Behavior ends here; control returns to the run statement in the caller.
+    end behavior
+end procedure
+// --8<-- [end:get_token]
+
+
+// --8<-- [start:send_token]
+// SendToken: pushes tok (set by parent before run) to the designated outport,
+// retrying each phase until the push succeeds, then returns.
+procedure SendToken
+    parameter int W = 4
+
+    decl $
+    outport<W>* dst;   // pointer to the associated outport — set by parent
+    token<W>    tok;   // the token to send — set by parent before each run
+    bool        done;
+    $
+    init $dst = nullptr;$
+
+    behavior
+        $done = false;$;
+        do
+            wait until (this_phase == 1);
+            $done = dst->push(tok);$;
+            if (not done) then wait end if;
+        while (not done) end do;
+        // Behavior ends; push succeeded; control returns to caller.
+    end behavior
+end procedure
+// --8<-- [end:send_token]
+
+
+// --8<-- [start:merger]
+// Merger: combines one token from each input by summing the integer payloads.
+// Uses GetToken and SendToken procedures for all port interaction.
+module Merger
+    inport  in_a : width 4
+    inport  in_b : width 4
+    outport outp : width 4
+
+    // One I/O procedure instance per port
+    procedure get_a : GetToken<4>
+    procedure get_b : GetToken<4>
+    procedure send  : SendToken<4>
+
+    decl $int val_a;  int val_b;  int merged;$
+
+    // Wire each procedure to its port
+    init $
+    get_a.src = &in_a;
+    get_b.src = &in_b;
+    send.dst  = &outp;
+    $
+
+    behavior
+        do
+            // Concurrently wait for one token from each inport.
+            // The parallel block completes only when both GetToken procedures
+            // have successfully pulled a token.
+            [
+                run get_a;
+            ||
+                run get_b;
+            ];
+
+            // Both procedures have completed; read their results.
+            $
+            sitar::unpack(get_a.tok, val_a);
+            sitar::unpack(get_b.tok, val_b);
+            merged = val_a + val_b;
+            log << endl << "merged " << val_a << " + " << val_b << " = " << merged;
+            sitar::pack(send.tok, merged);
+            $;
+
+            // Push the result (the SendToken procedure handles the retry loop).
+            run send;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:merger]
+
+
+// --8<-- [start:harness]
+// Test harness: two producers feeding the merger, one sink consuming the output.
+module Top
+    submodule sys : System
+end module
+
+module System
+    submodule src_a  : Counter<0>     // produces 0, 1, 2, ...
+    submodule src_b  : Counter<2>     // produces 0, 2, 4, ... (step=2)
+    submodule merger : Merger
+    submodule sink   : PrintSink
+
+    net na : capacity 2 width 4
+    net nb : capacity 2 width 4
+    net nc : capacity 2 width 4
+
+    src_a.outp   => na    merger.in_a <= na
+    src_b.outp   => nb    merger.in_b <= nb
+    merger.outp  => nc    sink.inp    <= nc
+end module
+
+module Counter
+    parameter int STEP  = 1
+    outport outp : width 4
+    decl $int val; token<4> t; bool ok;$
+    init $val = 0;$
+    behavior
+        do
+            wait until (this_phase == 1);
+            $
+            sitar::pack(t, val);
+            ok = outp.push(t);
+            if (ok) val += STEP;
+            $;
+            if (not ok) then wait end if;
+            if (val >= 10 * STEP) then stop simulation; end if;
+        while (1) end do;
+    end behavior
+end module
+
+module PrintSink
+    inport inp : width 4
+    decl $token<4> t; int v;$
+    behavior
+        do
+            wait until (this_phase == 0);
+            $while (inp.pull(t)) { sitar::unpack(t, v); log << endl << "sink: " << v; }$;
+            wait;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:harness]

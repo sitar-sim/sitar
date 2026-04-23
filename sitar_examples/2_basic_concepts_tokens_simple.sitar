@@ -1,0 +1,46 @@
+// --8<-- [start:model]
+// The simplest token example: module A sends a single token
+// to module B.
+
+module Top
+    submodule a : A
+    submodule b : B
+    net n : capacity 10
+    a.outp => n
+    b.inp  <= n
+end module
+
+module A
+    outport outp
+    decl $token<> t;$
+    behavior
+        //push must happen in phase 1
+        wait until (this_phase == 1);
+		$
+        if (outp.push(t))
+            log << endl << "A pushed a token.";
+        $;
+    end behavior
+end module
+
+module B
+    inport inp
+    decl $token<> t;$
+    behavior
+        do
+        	//pull must happen in phase 0
+            wait until (this_phase == 0);
+            $
+            if (inp.pull(t))
+                log << endl << "B received a token.";
+            $;
+            wait;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:model]
+
+// Expected output:
+// (0,1)TOP.a   :A pushed a token.
+// (1,0)TOP.b   :B received a token.
+// Simulation stopped at time (0,1)

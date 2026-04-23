@@ -1,0 +1,180 @@
+// Packet router: 2 inports, 4 outports, address-based routing, round-robin arbitration.
+//
+// Token format: token<8> carrying two ints — address (4 bytes) and data (4 bytes).
+// Routing: outport index = address & (N-1), where N=4 (low 2 bits of address).
+// Arbitration: round-robin across inports — each cycle the router picks the
+//   next inport in turn that has a token waiting.
+// Buffering: the nets connecting the router to its sinks have capacity DEPTH.
+//   If the destination buffer is full, the router stalls until it drains.
+//
+// Test harness: two Sources generate packets cycling through all four addresses;
+//   four Sinks receive and log each packet.
+
+// --8<-- [start:top]
+module Top
+    submodule router : Router<4, 4>   // N=4 outports, DEPTH=4
+    submodule src0   : Source<0>
+    submodule src1   : Source<1>
+    submodule snk0   : Sink<0>
+    submodule snk1   : Sink<1>
+    submodule snk2   : Sink<2>
+    submodule snk3   : Sink<3>
+
+    // Input nets (low capacity — back-pressure reaches sources quickly)
+    net i0 : capacity 2 width 8
+    net i1 : capacity 2 width 8
+
+    // Output nets (capacity = DEPTH, acting as per-output buffers)
+    net o0 : capacity 4 width 8
+    net o1 : capacity 4 width 8
+    net o2 : capacity 4 width 8
+    net o3 : capacity 4 width 8
+
+    src0.outp  => i0    router.inp0 <= i0
+    src1.outp  => i1    router.inp1 <= i1
+    router.outp0 => o0    snk0.inp <= o0
+    router.outp1 => o1    snk1.inp <= o1
+    router.outp2 => o2    snk2.inp <= o2
+    router.outp3 => o3    snk3.inp <= o3
+end module
+// --8<-- [end:top]
+
+
+// --8<-- [start:router]
+module Router
+    parameter int N     = 4   // number of outports (must be power of 2)
+    parameter int DEPTH = 4   // buffer depth per outport (informational; enforced by net capacity in Top)
+
+    // Two inports and four outports, each carrying 8-byte tokens
+    inport  inp0 : width 8
+    inport  inp1 : width 8
+    outport outp0 : width 8
+    outport outp1 : width 8
+    outport outp2 : width 8
+    outport outp3 : width 8
+
+    decl $
+    // C++ pointer arrays allow indexed access to the named ports in code blocks.
+    // This is the standard pattern for multi-port modules in Sitar.
+    inport<8>*  ins[2];
+    outport<8>* outs[4];
+
+    int      pkt_addr;    // address field of the currently routed packet
+    int      pkt_data;    // data field
+    token<8> pending;     // token being forwarded this cycle
+    int      rr;          // round-robin pointer (0 or 1)
+    int      dst;         // resolved output port index
+    bool     found;       // whether a token was picked this cycle
+    bool     ok;
+    $
+    init $
+    ins[0] = &inp0;  ins[1] = &inp1;
+    outs[0] = &outp0; outs[1] = &outp1;
+    outs[2] = &outp2; outs[3] = &outp3;
+    rr = 0;  found = false;  ok = false;
+    $
+
+    behavior
+        do
+            // ---- Phase 0: arbitrate and pick one token ----
+            $found = false;$;
+            do
+                wait until (this_phase == 0);
+                $
+                // Check inports in round-robin order starting at rr
+                for (int a = 0; a < 2 && !found; a++) {
+                    int idx = (rr + a) % 2;
+                    if (ins[idx]->pull(pending)) {
+                        sitar::unpack(pending, pkt_addr, pkt_data);
+                        dst   = pkt_addr & (N - 1);   // low bits select output
+                        rr    = (idx + 1) % 2;         // advance round-robin
+                        found = true;
+                        log << endl
+                            << "in[" << idx << "] -> out[" << dst << "]"
+                            << "  addr=" << pkt_addr
+                            << "  data=" << pkt_data;
+                    }
+                }
+                $;
+                if (not found) then wait end if;
+            while (not found) end do;
+
+            // ---- Phase 1: forward to destination output ----
+            $ok = false;$;
+            do
+                wait until (this_phase == 1);
+                $ok = outs[dst]->push(pending);$;
+                if (not ok) then wait end if;
+            while (not ok) end do;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:router]
+
+
+// --8<-- [start:source]
+module Source
+    parameter int ID = 0   // used for logging and initial address offset
+
+    outport outp : width 8
+
+    decl $
+    static const int NUM_PKTS = 12;   // 3 packets per output port
+    int      seq;
+    int      next_addr;
+    token<8> t;
+    bool     ok;
+    $
+    init $seq = 0;  next_addr = ID % 4;$
+
+    behavior
+        do
+            wait until (this_phase == 1);
+            $
+            sitar::pack(t, next_addr, seq);
+            ok = outp.push(t);
+            if (ok) {
+                log << endl << "src[" << ID << "] addr=" << next_addr << " data=" << seq;
+                next_addr = (next_addr + 1) % 4;
+                seq++;
+            }
+            $;
+            if (not ok) then wait end if;
+            if (seq >= NUM_PKTS) then
+                stop simulation;
+            end if;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:source]
+
+
+// --8<-- [start:sink]
+module Sink
+    parameter int ID = 0
+
+    inport inp : width 8
+
+    decl $
+    token<8> t;
+    int      addr;
+    int      data;
+    int      total;
+    $
+    init $total = 0;$
+
+    behavior
+        do
+            wait until (this_phase == 0);
+            $
+            while (inp.pull(t)) {
+                sitar::unpack(t, addr, data);
+                log << endl << "snk[" << ID << "] addr=" << addr << " data=" << data;
+                total++;
+            }
+            $;
+            wait;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:sink]

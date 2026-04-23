@@ -1,0 +1,128 @@
+// Producer-Consumer example demonstrating three stop conditions.
+// The stop mode is selected by setting STOP_MODE in Top:
+//
+//   STOP_MODE = 1  Stop after Producer has sent    MAX_TOKENS tokens
+//   STOP_MODE = 2  Stop after Consumer has received MAX_TOKENS tokens
+//   STOP_MODE = 3  Stop after MAX_CYCLES simulation cycles have elapsed
+//
+// Token payload: a sequence of integers (0, 1, 2, ...) packed into token<4>.
+// The channel net has capacity 4; the Producer can buffer up to 4 unsent tokens.
+
+
+// --8<-- [start:top]
+module Top
+    // ---------------------------------------------------------------
+    // Change STOP_MODE to 1, 2, or 3 to select the termination style
+    parameter int STOP_MODE  = 1
+    parameter int MAX_TOKENS = 10
+    parameter int MAX_CYCLES = 25
+    // ---------------------------------------------------------------
+    submodule sys : System<STOP_MODE, MAX_TOKENS, MAX_CYCLES>
+end module
+
+module System
+    parameter int MODE       = 1
+    parameter int MAX_TOKENS = 10
+    parameter int MAX_CYCLES = 25
+
+    submodule prod  : Producer<MODE, MAX_TOKENS>
+    submodule cons  : Consumer<MODE, MAX_TOKENS>
+    submodule timer : Timer<MODE, MAX_CYCLES>
+
+    net channel : capacity 4 width 4
+    prod.outp => channel
+    cons.inp  <= channel
+end module
+// --8<-- [end:top]
+
+
+// --8<-- [start:producer]
+module Producer
+    parameter int MODE       = 1
+    parameter int MAX_TOKENS = 10
+
+    outport outp : width 4
+
+    decl $
+    int      count;
+    token<4> t;
+    $
+    init $count = 0;$
+
+    behavior
+        do
+            wait until (this_phase == 1);
+            $
+            sitar::pack(t, count);
+            while (outp.push(t)) {
+                log << endl << "produced " << count;
+                count++;
+                if (count >= MAX_TOKENS && MODE == 1) break;
+                sitar::pack(t, count);
+            }
+            $;
+            wait;
+
+            // MODE 1: stop after producing MAX_TOKENS
+            if (MODE == 1 and count >= MAX_TOKENS) then
+                $log << endl << "producer: " << MAX_TOKENS << " tokens sent -- stopping";$;
+                stop simulation;
+            end if;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:producer]
+
+
+// --8<-- [start:consumer]
+module Consumer
+    parameter int MODE       = 1
+    parameter int MAX_TOKENS = 10
+
+    inport inp : width 4
+
+    decl $
+    int      count;
+    token<4> t;
+    int      val;
+    $
+    init $count = 0;$
+
+    behavior
+        do
+            wait until (this_phase == 0);
+            $
+            while (inp.pull(t)) {
+                sitar::unpack(t, val);
+                log << endl << "consumed " << val;
+                count++;
+            }
+            $;
+            wait;
+
+            // MODE 2: stop after consuming MAX_TOKENS
+            if (MODE == 2 and count >= MAX_TOKENS) then
+                $log << endl << "consumer: " << MAX_TOKENS << " tokens received -- stopping";$;
+                stop simulation;
+            end if;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:consumer]
+
+
+// --8<-- [start:timer]
+module Timer
+    parameter int MODE       = 1
+    parameter int MAX_CYCLES = 25
+
+    behavior
+        // MODE 3: stop after MAX_CYCLES cycles; otherwise do nothing
+        if (MODE == 3) then
+            wait(MAX_CYCLES, 0);
+            $log << endl << "timer: " << MAX_CYCLES << " cycles elapsed -- stopping";$;
+            stop simulation;
+        end if;
+    end behavior
+end module
+// --8<-- [end:timer]
