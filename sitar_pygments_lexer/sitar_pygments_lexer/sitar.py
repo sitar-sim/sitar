@@ -158,6 +158,7 @@ class SitarLexer(RegexLexer):
         ],
        "codeblock": [
             (r"\$", Generic, "#pop"),
+            (r"//.*$", Comment.Multiline),
             (r".|\n", Generic),
         ],
 }

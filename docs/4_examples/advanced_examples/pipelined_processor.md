@@ -34,11 +34,11 @@ flowchart LR
 
 - **2 threads** (thread 0 and thread 1) alternate each cycle in round-robin
 - **4 pipeline stages**, each an instance of a single `Stage` procedure running in a parallel block
-- **Information transfer between stages** is via shared `PipelineReg` structs (fields: `valid`, `thread_id`, `pc`). Adjacent stages share a register: stage *i*'s `stage_output` and stage *i+1*'s `stage_input` point to the same memory
+- **Information transfer between stages** is via shared `PipelineReg` structs (fields: `valid`, `thread_id`, `pc`). Adjacent stages share a register: stage *i*'s `stage_output` and stage *i+1*'s `stage_input` point to the same shared variable
 - The upstream stage **writes** the register and sets `valid=true`; the downstream stage **reads** it and later sets `valid=false` (when it forwards the instruction along). This `valid` bit is the inter-stage handshake
-- All shared state — per-thread PCs, the active-thread selector, and the inter-stage registers — is bundled into a `ThreadData` struct that each stage holds by pointer
+- All shared state is bundled into a `ThreadData` struct that each stage holds by reference
 - Each stage *acquires* an instruction into its `stage_input`, *waits `DELAY` cycles* to model processing, and then *commits* to the next stage's input register. The last stage (Writeback) has no downstream and simply retires the instruction
-- This models an *elastic pipeline*: each stage's `DELAY` is an independent parameter. With all `DELAY=1` we get the classic full-throughput behavior — a new instruction enters the pipeline every cycle and one retires every cycle after the fill-up phase
+- This models an *elastic pipeline*: each stage's `DELAY` is an independent parameter. With all `DELAY=1` we get the full-throughput behavior. A new instruction enters the pipeline every cycle and one retires every cycle after the fill-up phase. With different delay values per stage, it behaves as an elastic pipeline.
 
 
 !!! note "Dummy Stages"
@@ -70,13 +70,17 @@ The `Top` module simply instantiates one processor, supplying the single templat
 
 ## Pipelined_Processor module
 
-The processor owns the shared state (per-thread PCs, active thread, all four pipeline registers) and instantiates four `Stage` procedure instances named `fetch`, `decode`, `execute`, `writeback`. Its `init` block — which in C++ member-construction order runs **after** every child's constructor — sets the `id`, `name`, and `ThreadData` pointers on each stage, chains the registers to form the pipeline, and installs the stop criterion on `writeback`.
+The processor owns the shared state (per-thread PCs, active thread, all four pipeline registers) and instantiates four `Stage` procedure instances named `fetch`, `decode`, `execute`, `writeback`. Its `init` block sets the `id`, `name`, and `ThreadData` pointers on each stage, chains the registers to form the pipeline, and installs the stop criterion on `writeback`.
+
+!!! note "Init block and construction order"
+    When `sitar translate` converts a module description to a C++ class, the content inside the `init` block gets placed inside its constructor. If a parent module instantiates a child submodule, the child's init gets executed before the parent's init, in accordance with the order in which C++ constructors get executed. Thus in a child module's init, default or initial values can be assigned to its variables, which can later be finalized/updated by the parent module's init, as illustrated by the following example.
+
 
 ``` sitar linenums="1"
 --8<-- "docs/sitar_examples/pipelined_processor/PipelinedProcessor.sitar:pipelined_processor"
 ```
 
-**Wiring pattern.** `stage_inputs[i]` is stage *i*'s working register — the currently processed instruction always sits there. Adjacent stages share a register:
+**Wiring pattern.** `stage_inputs[i]` is stage *i*'s working register. The currently processed instruction always sits there. Adjacent stages share a register:
 
 | Stage | id | `stage_input` | `stage_output` |
 |---|---|---|---|
@@ -91,7 +95,7 @@ The processor owns the shared state (per-thread PCs, active thread, all four pip
 
 ## Stage procedure
 
-A single `Stage` procedure is used by all four pipeline stages. Its body is a do-while loop with three steps — acquire, process, commit — plus bookkeeping.
+A single `Stage` procedure is used by all four pipeline stages. Its body is a do-while loop with three steps: acquire, process and commit, plus bookkeeping.
 
 ``` sitar linenums="1"
 --8<-- "docs/sitar_examples/pipelined_processor/PipelinedProcessor.sitar:stage"
@@ -147,18 +151,18 @@ Maximum simulation time = 40 cycles
 Simulation stopped at time (13,0)
 ```
 
-- **Cycles 0–2 — fill-up.** Each cycle a new instruction enters Fetch and everything downstream shifts right by one.
-- **Cycle 3 onward — steady state.** All four stages are active; one instruction retires every cycle. The two threads alternate (round-robin `active_thread`), and each thread's PC advances independently.
-- **Cycle 13 — stop.** Writeback retires its 10th instruction at cycle 12 (visible in the `(12,1)` log line), its stop check fires immediately, and `stop simulation` halts the run at `(13,0)`.
+- **Cycles 0–2: fill-up.** Each cycle a new instruction enters Fetch and everything downstream shifts right by one.
+- **Cycle 3 onward: steady state.** All four stages are active; one instruction retires every cycle. The two threads alternate (round-robin `active_thread`), and each thread's PC advances independently.
+- **Cycle 13: stop.** Writeback retires its 10th instruction at cycle 12 (visible in the `(12,1)` log line), its stop check fires immediately, and `stop simulation` halts the run at `(13,0)`.
 
-The `(N,1)` prefix on the log lines comes from the logging branch running in phase 1 — that's the stable end-of-cycle snapshot. The final stop message has prefix `(13,0)TOP.proc.writeback:` because it's emitted from the Writeback stage's own logger at phase 0.
+The `(N,1)` prefix on the log lines comes from the logging branch running in phase 1 that's the stable end-of-cycle snapshot. The final stop message has prefix `(13,0)TOP.proc.writeback:` because it's emitted from the Writeback stage's own logger at phase 0.
 
 ---
 
 ## Adapting this pattern
 
 !!! tip "Varying pipeline depth or stage delays"
-    To add a longer execute phase, change the instantiation: `procedure execute : Stage<3>`. The handshake absorbs the change automatically — Fetch and Decode will stall cleanly whenever Execute is busy, and the throughput will drop accordingly. To add more stages or more threads, extend `NUM_STAGES` (and the `stage_names[]` array) or change the `NUM_THREADS` template argument in `Top`.
+    To add a longer execute phase, change the instantiation: `procedure execute : Stage<3>`. The handshake absorbs the change automatically.  Fetch and Decode will stall cleanly whenever Execute is busy, and the throughput will drop accordingly. To add more stages or more threads, extend `NUM_STAGES` (and the `stage_names[]` array) or change the `NUM_THREADS` template argument in `Top`.
 
 !!! tip "Real stage functionality"
     The stages here carry only `thread_id` and `pc`. To model real behavior, extend `PipelineReg` with additional fields (opcode, operands, result), have Fetch populate them (e.g. from an instruction memory submodule), and have Execute/Writeback act on them. The pipeline skeleton stays the same.

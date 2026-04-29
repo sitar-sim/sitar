@@ -46,10 +46,12 @@ end module
 module Pipelined_Processor
 
     // Number of hardware threads. Fetch round-robins through them.
-    // NUM_STAGES is hard-coded to 4 (Fetch/Decode/Execute/Writeback).
     parameter int NUM_THREADS = 2
+    
+    // NUM_STAGES is fixed at 4 (Fetch/Decode/Execute/Writeback).
 
-    include $
+    include 
+    $
     #include "PipelineTypes.h"
     #include <iomanip>
     #include <sstream>
@@ -57,7 +59,8 @@ module Pipelined_Processor
 
     // Shared state owned by the processor and pointed to by every stage
     // via ThreadData.
-    decl $
+    decl 
+    $
     static const int NUM_STAGES = 4;
 
     // Per-thread program counter. Incremented by Fetch each time that
@@ -85,8 +88,9 @@ module Pipelined_Processor
 
     // The four stages are procedure instances. Each is parameterized by
     // its processing delay; all four happen to use DELAY=1 here, but
-    // changing any value (e.g. Execute<3>) just works -- the handshake
-    // absorbs the change automatically.
+    // changing any value >=0 (e.g. Execute<3>) just works. The handshake
+    // absorbs the change automatically. 
+    // Note: At-least one of the stage must have a non-zero delay
     procedure fetch     : Stage<1>
     procedure decode    : Stage<1>
     procedure execute   : Stage<1>
@@ -96,7 +100,8 @@ module Pipelined_Processor
     // construction order). That lets us override the defaults each
     // Stage procedure set for itself (id=0, name="", nullptr pointers,
     // stop_when_total_executed=-1).
-    init $
+    init 
+    $
     // --- initialize shared state ------------------------------------
     for (int i = 0; i < NUM_THREADS; i++) pc[i] = 0;
     active_thread = 0;

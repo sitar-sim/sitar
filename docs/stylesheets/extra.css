@@ -40,6 +40,22 @@
   border-radius: 3px;
 }
 
+/* Embedded // comments inside $...$ blocks — purple, no italic, same band bg */
+.md-typeset .highlight .cm,
+.md-typeset code .cm,
+.md-typeset pre code .cm {
+  color: #669999;
+  font-style: normal;
+  background-color: rgba(106, 13, 173, 0.08);
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+}
+[data-md-color-scheme="slate"] .md-typeset .highlight .cm,
+[data-md-color-scheme="slate"] .md-typeset code .cm,
+[data-md-color-scheme="slate"] .md-typeset pre code .cm {
+  background-color: rgba(186, 132, 255, 0.18);
+}
+
 /* =========================================================
    Material sidebar: emphasize section headings + grouping
    Copy-paste safe
