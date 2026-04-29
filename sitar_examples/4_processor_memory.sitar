@@ -1,0 +1,275 @@
+// Processor-Memory model: a probabilistic instruction trace generator connected
+// to a byte-addressable memory with fixed access latency.
+//
+// Processor: generates NUM_INSTR instructions. Every instruction has an
+//   instruction fetch (IFETCH). Each instruction also independently has a
+//   load (probability LOAD_PCT%) and/or a store (probability STORE_PCT%).
+//   An instruction with both load and store becomes an ATOMIC_LS.
+//   The processor is blocking: it issues one request and waits for its response
+//   before issuing the next.
+//
+// Memory: a 1 KB byte array initialized with mem[i] = i % 256.
+//   Responds to each request after LATENCY cycles.
+//   Returns error=1 if the byte address is out of range.
+//
+// Request token  : token<12> = { type:int, addr:int, data:int }
+// Response token : token<8>  = { error:int, data:int }
+//
+// Expected output (LOAD_PCT=40, STORE_PCT=30, NUM_INSTR=5, LATENCY=3):
+// (0,1)  TOP.sys.proc : IFETCH  pc=0  addr=0
+// (3,0)  TOP.sys.mem  : MEM READ  addr=0  data=...
+// (3,0)  TOP.sys.proc : IFETCH OK  data=...
+// (3,1)  TOP.sys.proc : LOAD  addr=64
+// (6,0)  TOP.sys.mem  : MEM READ  addr=64  data=...
+// ...
+// Simulation stopped after 5 instructions.
+
+
+// --8<-- [start:top]
+module Top
+    submodule sys : System
+end module
+
+module System
+    // Processor parameters: load%, store%, instruction count
+    submodule proc : Processor<40, 30, 5>
+    // Memory parameters: latency in cycles
+    submodule mem  : Memory<3>
+
+    net req  : capacity 1 width 12   // Processor -> Memory
+    net resp : capacity 1 width 8    // Memory    -> Processor
+
+    proc.req_port  => req
+    mem.req_port   <= req
+    mem.resp_port  => resp
+    proc.resp_port <= resp
+end module
+// --8<-- [end:top]
+
+
+// --8<-- [start:types]
+// Shared type definitions — replicated in both Processor and Memory decl blocks.
+// In a real design these would live in a shared header via include $#include "..."$.
+//
+//   enum MemOpType { IFETCH=0, LOAD=1, STORE=2, ATOMIC_LS=3 }
+//   Request  token<12>: type(4B) | addr(4B) | data(4B)
+//   Response token<8> : error(4B) | data(4B)
+// --8<-- [end:types]
+
+
+// --8<-- [start:processor]
+module Processor
+    parameter int LOAD_PCT  = 40   // % of instructions with a load  (0-100)
+    parameter int STORE_PCT = 30   // % of instructions with a store (0-100)
+    parameter int NUM_INSTR = 5    // total instructions to simulate
+
+    outport req_port  : width 12
+    inport  resp_port : width 8
+
+    include $#include <cstdlib>$
+
+    decl $
+    enum MemOpType { IFETCH = 0, LOAD = 1, STORE = 2, ATOMIC_LS = 3 };
+
+    int      pc;           // program counter (instruction index)
+    int      instr_count;  // instructions completed
+
+    // Pending memory operation fields
+    int      req_type;
+    int      req_addr;
+    int      req_data;
+    int      resp_error;
+    int      resp_rdata;
+    token<12> req_tok;
+    token<8>  resp_tok;
+    bool     ok;
+    bool     pulled;
+
+    // Decoded access decisions for current instruction
+    bool     do_load;
+    bool     do_store;
+    $
+    init $
+    pc = 0;  instr_count = 0;
+    srand(42);   // fixed seed for reproducibility
+    $
+
+    behavior
+        do
+            // ============================================================
+            // Step 1: Instruction fetch (every instruction)
+            // ============================================================
+            $
+            req_type = IFETCH;
+            req_addr = pc * 4;   // byte address of instruction word
+            req_data = 0;
+            sitar::pack(req_tok, req_type, req_addr, req_data);
+            ok = false;
+            $;
+            do
+                wait until (this_phase == 1);
+                $ok = req_port.push(req_tok);$;
+                if (not ok) then wait end if;
+            while (not ok) end do;
+            $log << endl << "IFETCH  pc=" << pc << "  addr=" << req_addr;$;
+
+            wait until (resp_port.peek());
+            $
+            pulled = resp_port.pull(resp_tok);
+            sitar::unpack(resp_tok, resp_error, resp_rdata);
+            if (resp_error)
+                log << endl << "  IFETCH ERROR (out of bounds)";
+            else
+                log << endl << "  IFETCH OK  data=" << resp_rdata;
+            $;
+
+            // ============================================================
+            // Step 2: Decide data memory accesses for this instruction
+            // ============================================================
+            $
+            do_load  = (rand() % 100) < LOAD_PCT;
+            do_store = (rand() % 100) < STORE_PCT;
+            int data_addr  = (pc * 4 + 64) % 1024;   // example data address
+            int write_data = pc * 10;
+
+            req_addr = data_addr;
+            req_data = write_data;
+
+            if (do_load && do_store)
+                req_type = ATOMIC_LS;
+            else if (do_load)
+                req_type = LOAD;
+            else if (do_store)
+                req_type = STORE;
+            $;
+
+            // ============================================================
+            // Step 3: Issue data access (if any)
+            // ============================================================
+            if (do_load || do_store) then
+                $
+                sitar::pack(req_tok, req_type, req_addr, req_data);
+                ok = false;
+                $;
+                do
+                    wait until (this_phase == 1);
+                    $ok = req_port.push(req_tok);$;
+                    if (not ok) then wait end if;
+                while (not ok) end do;
+
+                $
+                const char* op_name =
+                    (req_type == ATOMIC_LS) ? "ATOMIC_LS" :
+                    (req_type == LOAD)      ? "LOAD"      : "STORE";
+                log << endl << op_name
+                    << "  addr=" << req_addr
+                    << "  wdata=" << req_data;
+                $;
+
+                wait until (resp_port.peek());
+                $
+                pulled = resp_port.pull(resp_tok);
+                sitar::unpack(resp_tok, resp_error, resp_rdata);
+                if (resp_error)
+                    log << endl << "  ERROR (out of bounds)";
+                else
+                    log << endl << "  OK  rdata=" << resp_rdata;
+                $;
+            end if;
+
+            $pc++;  instr_count++;$;
+            $log << endl << "--- instr " << instr_count << " complete ---";$;
+        while (instr_count < NUM_INSTR) end do;
+
+        $log << endl << "Processor done: " << NUM_INSTR << " instructions executed";$;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:processor]
+
+
+// --8<-- [start:memory]
+module Memory
+    parameter int LATENCY = 3      // response latency in cycles
+    parameter int SIZE    = 1024   // memory size in bytes
+
+    inport  req_port  : width 12
+    outport resp_port : width 8
+
+    include $#include <cstring>$
+
+    decl $
+    enum MemOpType { IFETCH = 0, LOAD = 1, STORE = 2, ATOMIC_LS = 3 };
+
+    unsigned char mem_array[SIZE];
+
+    int      req_type;
+    int      req_addr;
+    int      req_data;
+    int      resp_error;
+    int      resp_rdata;
+    token<12> req_tok;
+    token<8>  resp_tok;
+    bool     pulled;
+    bool     ok;
+    $
+    init $
+    // Initialize: mem[i] = i % 256 (a simple known pattern)
+    for (int i = 0; i < SIZE; i++)
+        mem_array[i] = (unsigned char)(i % 256);
+    $
+
+    behavior
+        do
+            // ---- Wait for a request ----
+            // Pull in phase 0 for phase discipline
+            $pulled = false;$;
+            do
+                wait until (this_phase == 0);
+                $pulled = req_port.pull(req_tok);$;
+                if (not pulled) then wait end if;
+            while (not pulled) end do;
+
+            // ---- Simulate access latency ----
+            wait(LATENCY, 0);
+
+            // ---- Process the request ----
+            $
+            sitar::unpack(req_tok, req_type, req_addr, req_data);
+            resp_error  = 0;
+            resp_rdata  = 0;
+
+            bool in_bounds = (req_addr >= 0 && (req_addr + 4) <= SIZE);
+
+            if (!in_bounds) {
+                resp_error = 1;
+                log << endl << "MEM ERROR OOB  addr=" << req_addr
+                    << "  type=" << req_type;
+            } else {
+                // Write path (STORE or ATOMIC_LS)
+                if (req_type == STORE || req_type == ATOMIC_LS) {
+                    memcpy(&mem_array[req_addr], &req_data, 4);
+                    log << endl << "MEM WRITE  addr=" << req_addr
+                        << "  data=" << req_data;
+                }
+                // Read path (IFETCH, LOAD, or ATOMIC_LS)
+                if (req_type == IFETCH || req_type == LOAD || req_type == ATOMIC_LS) {
+                    memcpy(&resp_rdata, &mem_array[req_addr], 4);
+                    log << endl << "MEM READ   addr=" << req_addr
+                        << "  data=" << resp_rdata;
+                }
+            }
+            sitar::pack(resp_tok, resp_error, resp_rdata);
+            ok = false;
+            $;
+
+            // ---- Send response in phase 1 ----
+            do
+                wait until (this_phase == 1);
+                $ok = resp_port.push(resp_tok);$;
+                if (not ok) then wait end if;
+            while (not ok) end do;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:memory]

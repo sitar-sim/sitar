@@ -1,0 +1,56 @@
+// Demonstrates: module declaration, submodule instantiation on one line,
+// module-level init $...$, and hierarchy navigation functions.
+//
+// System logs hierarchy info at cycle 0, then workers wait until their
+// individual start_at cycle before logging.
+//
+// Expected output:
+// (0,0) TOP.sys   : Hierarchy rooted at sys:
+// ---------------------
+//  module ID  : TOP.sys
+//  type       : System
+//  ...
+//  submodules :
+//         - a of type Worker
+//         - b of type Worker
+// ...
+// (3,0) TOP.sys.a : a  full: TOP.sys.a  parent: sys  start_at: 3
+// (7,0) TOP.sys.b : b  full: TOP.sys.b  parent: sys  start_at: 7
+// Simulation stopped at time (100,0)
+
+// --8<-- [start:model]
+module Top
+    submodule sys : System
+    // Module-level init: runs in the constructor before simulation starts.
+    // Can set fields on direct submodule instances.
+    init
+    $
+        sys.a.start_at = 3;
+        sys.b.start_at = 7;
+    $
+end module
+
+module System
+    submodule a, b : Worker     // two Worker instances declared on one line
+    behavior
+        $
+        log << endl << "Hierarchy rooted at " << instanceId() << ":";
+        log << "\n" << getInfo();
+        $;
+    end behavior
+end module
+
+module Worker
+    decl $int start_at;$
+    init $start_at = 0;$     // default value; overridden by Top's init block
+    behavior
+        wait until (this_cycle >= start_at);
+        $
+        log << endl << instanceId()
+                    << "  full: "     << hierarchicalId()
+                    << "  parent: "   << parent()->instanceId()
+                    << "  start_at: " << start_at;
+        $;
+    end behavior
+end module
+// --8<-- [end:model]

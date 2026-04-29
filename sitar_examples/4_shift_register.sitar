@@ -1,0 +1,137 @@
+// Shift register with parameterized depth and integer token payloads.
+// Source packs integers with sitar::pack; Consumer unpacks with sitar::unpack.
+// Each Stage delays a token by DELAY cycles.
+//
+// Example instantiation: ShiftRegister<4,1> — 4 stages, 1-cycle delay each.
+//
+// Expected output (N=4, DELAY=1, NUM_TOKENS=6):
+// (0,1) TOP.S.prod :  sent 0
+// (0,1) TOP.S.prod :  sent 1
+// (0,1) TOP.S.prod :  sent 2
+// ...
+// (5,0) TOP.S.cons :  received 0
+// (6,0) TOP.S.cons :  received 1
+// ...
+// Simulation stopped at time (10,0)
+
+// --8<-- [start:structure]
+module Top
+    submodule S : ShiftRegister<4>
+end module
+
+module ShiftRegister
+    parameter int N     = 2   // number of pipeline stages
+    parameter int DELAY = 1   // latency per stage in cycles
+
+    submodule         prod        : Producer
+    submodule         cons        : Consumer
+    submodule_array   stage[N]    : Stage<DELAY>
+    net_array         n[N+1]      : capacity 1 width 4
+
+    prod.op   => n[0]
+    cons.ip   <= n[N]
+    for i in 0 to (N-1)
+        stage[i].ip <= n[i]
+        stage[i].op => n[i+1]
+    end for
+end module
+// --8<-- [end:structure]
+
+
+// --8<-- [start:producer]
+module Producer
+    outport op : width 4
+
+    decl $
+    static const int NUM_TOKENS = 6;
+    int      count;
+    token<4> t;
+    $
+    init $count = 0;$
+
+    behavior
+        do
+            wait until (this_phase == 1);
+            $
+            // Pack the current count into the token payload and push.
+            // push() returns false if the net is full; the loop retries
+            // each time the output net frees up a slot.
+            sitar::pack(t, count);
+            while (op.push(t)) {
+                log << endl << " sent " << count;
+                count++;
+                if (count >= NUM_TOKENS) break;
+                sitar::pack(t, count);
+            }
+            $;
+            wait;
+        while (count < NUM_TOKENS) end do;
+    end behavior
+end module
+// --8<-- [end:producer]
+
+
+// --8<-- [start:stage]
+module Stage
+    parameter int DELAY = 1
+
+    inport  ip : width 4
+    outport op : width 4
+
+    decl $token<4> t; bool done;$
+
+    behavior
+        do
+            // Phase 0: pull one token (block until one is available)
+            $done = false;$;
+            do
+                wait until (this_phase == 0);
+                $done = ip.pull(t);$;
+                if (not done) then wait end if;
+            while (not done) end do;
+
+            // Hold for DELAY cycles — models pipeline stage latency
+            wait(DELAY, 0);
+
+            // Phase 1: push the token downstream (retry if net is full)
+            $done = false;$;
+            do
+                wait until (this_phase == 1);
+                $done = op.push(t);$;
+                if (not done) then wait end if;
+            while (not done) end do;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:stage]
+
+
+// --8<-- [start:consumer]
+module Consumer
+    inport ip : width 4
+
+    decl $
+    static const int NUM_TOKENS = 6;
+    int      count;
+    token<4> t;
+    int      val;
+    $
+    init $count = 0;$
+
+    behavior
+        do
+            // Phase 0: drain all available tokens
+            wait until (this_phase == 0);
+            $
+            while (ip.pull(t)) {
+                sitar::unpack(t, val);
+                log << endl << " received " << val;
+                count++;
+            }
+            $;
+            wait;
+        while (count < NUM_TOKENS) end do;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:consumer]

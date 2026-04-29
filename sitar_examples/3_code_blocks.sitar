@@ -1,0 +1,49 @@
+// Demonstrates: structural C++ embedding positions (include, decl, init)
+// and behavioral code blocks ($...$).
+//
+// Expected output:
+// (0,0)TOP.m      :pi=3.14159  count=100
+// Simulation stopped at time (0,0)
+
+// --8<-- [start:model]
+module Top
+    submodule m : CodeBlocks
+end module
+
+module CodeBlocks
+
+    // include $...$: C++ placed in the file header (before the class definition)
+    include $#include <cmath>$
+
+    // decl $...$: C++ placed in the module class body (private member declarations)
+    decl $double _pi;$
+    decl $int    _count;$
+
+    // init $...$: C++ placed in the module class constructor
+    init
+    $
+        _pi    = 3.14159;
+        _count = 0;
+    $
+
+    behavior
+
+        // $...$: behavioral code block, executes instantaneously
+        $
+        log << endl << "pi=" << _pi << "  sin(0)=" << std::sin(0.0);
+        $;
+
+        // decl and init may also appear inside the behavior block (with trailing ;).
+        // The generated C++ still goes into the class body / constructor, not the run function.
+        decl $int _local;$;
+        init $_local = 99;$;
+
+        $
+        _count = _local + 1;
+        log << endl << "pi=" << _pi << "  count=" << _count;
+        $;
+
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:model]

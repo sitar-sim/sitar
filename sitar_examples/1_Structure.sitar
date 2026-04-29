@@ -1,0 +1,41 @@
+
+module Top
+	submodule s : Structure 
+end module
+
+module Structure
+	submodule a : A
+	submodule b : B
+	
+	net n1 : capacity 10 
+	net n2 : capacity 10 width 16
+	a.outp=>n1   b.inp<=n1
+	b.outp=>n2   a.inp<=n2
+	
+	behavior
+	$cout<<"\nRunning module "<<hierarchicalId();$;
+	end behavior
+end module
+
+
+module A
+	inport  inp : width  16
+	outport outp
+	
+	behavior
+	$cout<<"\nRunning module "<<hierarchicalId();$;
+	end behavior
+end module
+
+
+module B
+	inport  inp  
+	outport outp : width 16
+	
+	behavior
+	$cout<<"\nRunning module "<<hierarchicalId();$;
+	end behavior
+end module
+
+
+
