@@ -117,10 +117,9 @@ run procName;                                // invoke procedure; suspends until
 
 ## Built-ins available inside any `$...$`
 
-- `current_time` — `sitar::time`; streams as `(cycle,phase)`. `current_time.cycle()` and `current_time.phase()` are accessors.
+- `current_time` — `sitar::time`; streams as `(cycle,phase)`. `current_time.cycle()` and `current_time.phase()` are accessors. **Use these inside `$...$` blocks.**
 - `time(c, p)` — construct a `sitar::time`. Comparable with `==`, `<`, `>=`, etc.
-- `this_cycle` — `uint64_t`, current cycle (also valid in Sitar grammar expressions).
-- `this_phase` — `bool`, 0 or 1 (also valid in Sitar grammar expressions).
+- `this_cycle` / `this_phase` — valid **only in Sitar grammar expressions** (`if`, `while`, `wait until` conditions). The translator rewrites them to `current_time.cycle()` / `current_time.phase()`. Writing `this_cycle` or `this_phase` verbatim inside a `$...$` block compiles to an undeclared-identifier error — use `current_time.cycle()` / `current_time.phase()` there instead.
 - `log` — module's `sitar::logger` (acts as `std::ostream`). `log << endl << "msg";` emits a newline + the auto prefix `(cycle,phase)hierarchicalId :`. Without `endl` no prefix is added.
 - `instanceId()` → `std::string` ("a"). `hierarchicalId()` → "TOP.sys.a". `parent()` → `module*`. `getInfo()` → recursive structural dump (call from `Top.behavior` to see whole system).
 - `endl` is `std::endl`. `cout` is `std::cout`. The kernel pulls in `<iostream>`, `<string>`, `<sstream>`, `<fstream>`, `<vector>`, `<map>`, `<cassert>`, `<stdint.h>` — only `include $...$` headers it doesn't already provide.
@@ -140,7 +139,7 @@ A token is `sitar::token<W>` where `W` is payload size in bytes. Width 0 = signa
 | `sitar::unpack(t, a, b, ...)` | Inverse |
 | `outp.push(t)` → `bool` | True on success, false if net full. **Use only in phase 1** |
 | `inp.pull(t)` → `bool` | True on success, false if net empty. **Use only in phase 0** |
-| `inp.peek(t)` → `bool` | Non-destructive read |
+| `inp.peek(t)` → `bool` | Non-destructive read. **Always requires a token argument** — C++ signature is `bool peek(token<W>& tok)`. There is no zero-argument overload; calling `inp.peek()` is a compile error. When used in a `wait until`, wrap in `$...$`: `wait until ($inp.peek(tok)$);` |
 | `inp.empty()`, `inp.numTokens()`, `outp.full()` | Net state queries |
 
 Width matching is strict: net width == port width == `token<W>` width. Mismatch → compile-time error. The kernel does NOT enforce phase discipline at runtime, but violating it (push in phase 0, pull in phase 1) breaks determinism in parallel mode.
@@ -346,6 +345,8 @@ Because reads and writes are segregated by phase, no two modules can race on a n
 ## Common pitfalls
 
 - **Iteration limit exceeded** → an infinite loop with no `wait` inside (`do ... while(1) end do` with all-instantaneous body), or a `wait until` whose condition can never become true within a phase. Add a `wait;` inside the loop.
+- **`this_cycle` or `this_phase` inside `$...$`** → undeclared-identifier compile error. These identifiers only exist in the Sitar grammar (conditions of `if`, `while`, `wait until`); the translator rewrites them. Inside a `$...$` raw C++ block, use `current_time.cycle()` and `current_time.phase()` instead.
+- **`inp.peek()` with no argument** → compile error. The only signature is `bool peek(token<W>& tok)`. When checking for a token in a `wait until`, write `wait until ($inp.peek(tok)$);` (wrap in `$...$` so the argument is passed).
 - **Operator `&&`/`||`/`!` in `if`/`while`** → use `and`/`or`/`not`, or wrap in `$...$`.
 - **Width mismatch** → token, port, and net widths must all be the literal same number. `static_assert` in `pack`/`unpack` catches sum-of-arg-sizes mismatches.
 - **Pull in phase 1, push in phase 0** → silent data corruption in parallel mode. Always gate with `wait until (this_phase == 0)` / `wait until (this_phase == 1)`.

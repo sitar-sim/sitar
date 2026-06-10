@@ -13,10 +13,10 @@
 // Simulation runs for RUN_CYCLES cycles then stops.
 //
 // Expected output (N=3, M=3, INJECT_EVERY=4, RUN_CYCLES=20):
-// (0,1) TOP.mesh.node[0][0] : (0,0) inject to (2,1)
-// (1,0) TOP.mesh.node[0][1] : (0,1) fwd E -> (2,1)
-// ...
-// (4,0) TOP.mesh.node[2][1] : (2,1) consumed data=0
+// (0,1) TOP.mesh.node[2][1] : (2,1) inject to (0,0)
+// (1,1) TOP.mesh.node[2][2] : (2,2) fwd E to (0,0)
+// (2,1) TOP.mesh.node[2][0] : (2,0) fwd S to (0,0)
+// (3,0) TOP.mesh.node[0][0] : (0,0) consumed data=7
 // ...
 
 // --8<-- [start:top]
@@ -113,7 +113,7 @@ module MeshNode
             wait until (this_phase == 0);
             $
             // Simulate per-cycle compute work (placeholder)
-            volatile int dummy = row * M + col + (int)this_cycle;
+            volatile int dummy = row * M + col + (int)current_time.cycle();
             (void)dummy;
 
             token<12> t;
@@ -147,9 +147,9 @@ module MeshNode
                     has_pkt = false;
                 }
                 // If push fails (net full), keep packet and retry next cycle
-            } else if ((int)this_cycle % INJECT_EVERY == 0) {
+            } else if ((int)current_time.cycle() % INJECT_EVERY == 0) {
                 // Slot empty: inject a new packet to a random destination
-                srand(row * M + col + (int)this_cycle * 7);
+                srand(row * M + col + (int)current_time.cycle() * 7);
                 int dr = rand() % N;
                 int dc = rand() % M;
                 if (dr != row || dc != col) {

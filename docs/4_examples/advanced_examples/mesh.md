@@ -65,17 +65,15 @@ $
 ## Expected output (3×3 mesh, 20 cycles)
 
 ```
-(0,1) TOP.mesh.node[0][0] : (0,0) inject to (2,1)
-(0,1) TOP.mesh.node[0][0] : (0,0) fwd E to (2,1)
-(1,0) TOP.mesh.node[0][1] : (0,1) fwd E to (2,1)
-(2,0) TOP.mesh.node[0][2] : (0,2) fwd S to (2,1)
-(3,0) TOP.mesh.node[1][2] : (1,2) fwd S to (2,1)
-(4,0) TOP.mesh.node[2][1] : (2,1) consumed data=0
+(0,1)TOP.mesh.node[2][1]:(2,1) inject to (0,0)
+(1,1)TOP.mesh.node[2][2]:(2,2) fwd E to (0,0)
+(2,1)TOP.mesh.node[2][0]:(2,0) fwd S to (0,0)
+(3,0)TOP.mesh.node[0][0]:(0,0) consumed data=7
 ...
 Simulation stopped at time (20,0)
 ```
 
-Each packet takes at most N+M−2 hops. With a 3×3 mesh the longest path is 4 hops. Multiple packets circulate concurrently; their interleaved log lines show the hop-by-hop traversal.
+The trace above shows a 3-hop path: node (2,1) injects a packet for (0,0). XY routing first moves it East — (2,1)→(2,2)→(2,0) (wrap-around, 2 East hops because the routing always moves East rather than West) — then one South hop via the toroidal wrap-around (row 2 to row 0). The `data=7` payload is the source node's linear index (2×3+1=7). Multiple packets circulate concurrently; inject and forward events are logged in phase 1, consume events in phase 0. With a 3×3 mesh, the longest path under non-minimal XY routing is N+M−2 = 4 hops.
 
 !!! tip "Scaling the mesh"
     Change the top-level instantiation to `Mesh<4,4>` or `Mesh<8,8>` to generate larger meshes. The structure, connection loops, and routing logic are all parameterized on N and M — no other changes are needed.

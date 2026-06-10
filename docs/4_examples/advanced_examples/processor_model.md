@@ -73,7 +73,7 @@ The processor uses member variables (declared in `decl`) for all state so that v
 ```
 
 !!! note "Blocking communication"
-    `wait until (resp_port.peek())` suspends the processor in place until the memory places a response token on `resp`. The processor makes no forward progress while waiting. This models a blocking memory interface: one outstanding request at a time.
+    `wait until ($resp_port.peek(resp_tok)$)` suspends the processor in place until the memory places a response token on `resp`. The `peek` call must be wrapped in `$...$` because it requires a token argument (the C++ signature is `bool peek(token<W>& tok)`). The processor makes no forward progress while waiting, modelling a blocking memory interface with one outstanding request at a time.
 
 ---
 
@@ -94,20 +94,27 @@ For a write (`STORE` or `ATOMIC_LS`), the memory copies 4 bytes from the request
 With `LOAD_PCT=40`, `STORE_PCT=30`, `NUM_INSTR=5`, `LATENCY=3`, a representative run might look like:
 
 ```
-(0,1)  TOP.sys.proc : IFETCH  pc=0  addr=0
-(3,0)  TOP.sys.mem  : MEM READ   addr=0  data=50462976
-(3,0)  TOP.sys.proc : IFETCH OK  data=50462976
-(3,1)  TOP.sys.proc : LOAD  addr=64  wdata=0
-(6,0)  TOP.sys.mem  : MEM READ   addr=64  data=67438087
-(6,0)  TOP.sys.proc : LOAD  OK  rdata=67438087
-(6,0)  TOP.sys.proc : --- instr 1 complete ---
-(6,1)  TOP.sys.proc : IFETCH  pc=1  addr=4
+(0,1) TOP.sys.proc:IFETCH  pc=0  addr=0
+(4,0) TOP.sys.mem:MEM READ   addr=0  data=50462976
+(4,1) TOP.sys.proc:  IFETCH OK  data=50462976
+(4,1) TOP.sys.proc:--- instr 1 complete ---
+(4,1) TOP.sys.proc:IFETCH  pc=1  addr=4
+(8,0) TOP.sys.mem:MEM READ   addr=4  data=117835012
+(8,1) TOP.sys.proc:  IFETCH OK  data=117835012
+(8,1) TOP.sys.proc:--- instr 2 complete ---
+(8,1) TOP.sys.proc:IFETCH  pc=2  addr=8
+(12,0) TOP.sys.mem:MEM READ   addr=8  data=185207048
+(12,1) TOP.sys.proc:  IFETCH OK  data=185207048
+(12,1) TOP.sys.proc:LOAD  addr=72  wdata=20
+(16,0) TOP.sys.mem:MEM READ   addr=72  data=1263159624
+(16,1) TOP.sys.proc:  OK  rdata=1263159624
+(16,1) TOP.sys.proc:--- instr 3 complete ---
 ...
-(29,0) TOP.sys.proc : Processor done: 5 instructions executed
-Simulation stopped at time (29,0)
+(32,1) TOP.sys.proc:Processor done: 5 instructions executed
+Simulation stopped at time (32,1)
 ```
 
-The exact load/store pattern varies with the random seed. With `srand(42)` the output is deterministic across runs.
+The exact load/store pattern varies with the random seed. With `srand(42)` the output is deterministic across runs. Each instruction fetch takes 4 cycles round-trip: the processor pushes the request in phase 1 of cycle K, the memory pulls in phase 0 of cycle K+1, waits LATENCY=3 cycles, and pushes the response in phase 1 of cycle K+4; the processor receives it in that same phase.
 
 !!! tip "Varying the parameters"
     - Set `LOAD_PCT=0` and `STORE_PCT=0` for a pure instruction-fetch workload.
