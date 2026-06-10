@@ -13,9 +13,9 @@ A producer module generates a stream of integer-valued tokens and a consumer rec
 
 ## Selecting a stop condition
 
-Change `STOP_MODE` in the `Top` module to select how the simulation ends:
+Change the first template argument to `System<...>` in the `Top` module to select how the simulation ends. `Top` itself cannot declare parameters: it is instantiated directly by the kernel, not as a template, so the `MODE`, `MAX_TOKENS`, and `MAX_CYCLES` values are passed as literal template arguments at this single point.
 
-| `STOP_MODE` | Meaning |
+| `MODE` | Meaning |
 |---|---|
 | `1` | Producer calls `stop simulation` after sending `MAX_TOKENS` tokens |
 | `2` | Consumer calls `stop simulation` after receiving `MAX_TOKENS` tokens |
@@ -61,7 +61,7 @@ The Timer module is a one-shot: if `MODE == 3`, it waits `MAX_CYCLES` cycles and
 
 ## Expected output
 
-**Mode 1** (`STOP_MODE=1, MAX_TOKENS=10`):
+**Mode 1** (`MODE=1, MAX_TOKENS=10`):
 
 ```
 (0,1) TOP.sys.prod : produced 0
@@ -70,15 +70,29 @@ The Timer module is a one-shot: if `MODE == 3`, it waits `MAX_CYCLES` cycles and
 (0,1) TOP.sys.prod : produced 3
 (1,0) TOP.sys.cons : consumed 0
 (1,0) TOP.sys.cons : consumed 1
-...
+(1,0) TOP.sys.cons : consumed 2
+(1,0) TOP.sys.cons : consumed 3
+(1,1) TOP.sys.prod : produced 4
+(1,1) TOP.sys.prod : produced 5
+(1,1) TOP.sys.prod : produced 6
+(1,1) TOP.sys.prod : produced 7
+(2,0) TOP.sys.cons : consumed 4
+(2,0) TOP.sys.cons : consumed 5
+(2,0) TOP.sys.cons : consumed 6
+(2,0) TOP.sys.cons : consumed 7
+(2,1) TOP.sys.prod : produced 8
 (2,1) TOP.sys.prod : produced 9
-(2,1) TOP.sys.prod : producer: 10 tokens sent -- stopping
-Simulation stopped at time (2,1)
+(3,0) TOP.sys.cons : consumed 8
+(3,0) TOP.sys.cons : consumed 9
+(3,0) TOP.sys.prod : producer: 10 tokens sent -- stopping
+Simulation stopped at time (3,0)
 ```
 
-**Mode 2** (`STOP_MODE=2, MAX_TOKENS=10`): The Producer runs indefinitely; the Consumer stops simulation after receiving 10 tokens. The final `stop simulation` call comes from the Consumer rather than the Producer.
+The channel has `capacity 4`, so the Producer's greedy push loop fills it with 4 tokens per phase-1 occurrence (the last batch is only 2, since `MAX_TOKENS=10`). The Consumer drains the channel one phase later, in phase 0 of the next cycle. After the Producer's final batch (tokens 8-9 at `(2,1)`), it advances to `(3,0)` before checking `count >= MAX_TOKENS`, which is when the stopping message is logged.
 
-**Mode 3** (`STOP_MODE=3, MAX_CYCLES=25`): Both Producer and Consumer run indefinitely until the Timer fires at cycle 25. The number of tokens in flight at that point is determined by the channel capacity and the relative rates of production and consumption.
+**Mode 2** (`MODE=2, MAX_TOKENS=10`): The Producer runs indefinitely; the Consumer stops simulation after receiving 10 tokens. The final `stop simulation` call comes from the Consumer rather than the Producer.
+
+**Mode 3** (`MODE=3, MAX_CYCLES=25`): Both Producer and Consumer run indefinitely until the Timer fires at cycle 25. The number of tokens in flight at that point is determined by the channel capacity and the relative rates of production and consumption.
 
 !!! note "Modes 1 and 2 are not equivalent"
     In mode 1, tokens may still be in transit inside the channel when `stop simulation` is called; the Consumer may not have seen all of them. In mode 2, the Consumer counts only tokens it has actually pulled, so the stop condition captures end-to-end delivery. Choose the mode that matches what your model needs to measure.

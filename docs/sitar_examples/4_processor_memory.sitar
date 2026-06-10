@@ -18,12 +18,12 @@
 // Expected output (LOAD_PCT=40, STORE_PCT=30, NUM_INSTR=5, LATENCY=3):
 // (0,1)  TOP.sys.proc : IFETCH  pc=0  addr=0
 // (4,0)  TOP.sys.mem  : MEM READ   addr=0  data=50462976
-// (4,1)  TOP.sys.proc :   IFETCH OK  data=50462976
-// (4,1)  TOP.sys.proc : --- instr 1 complete ---
-// (4,1)  TOP.sys.proc : IFETCH  pc=1  addr=4
+// (5,0)  TOP.sys.proc :   IFETCH OK  data=50462976
+// (5,0)  TOP.sys.proc : --- instr 1 complete ---
+// (5,1)  TOP.sys.proc : IFETCH  pc=1  addr=4
 // ...
-// (32,1) TOP.sys.proc : Processor done: 5 instructions executed
-// Simulation stopped at time (32,1)
+// (40,0) TOP.sys.proc : Processor done: 5 instructions executed
+// Simulation stopped at time (40,0)
 
 
 // --8<-- [start:top]
@@ -114,7 +114,7 @@ module Processor
             while (not ok) end do;
             $log << endl << "IFETCH  pc=" << pc << "  addr=" << req_addr;$;
 
-            wait until ($resp_port.peek(resp_tok)$);
+            wait until (this_phase == 0 and $resp_port.peek(resp_tok)$);
             $
             pulled = resp_port.pull(resp_tok);
             sitar::unpack(resp_tok, resp_error, resp_rdata);
@@ -167,7 +167,7 @@ module Processor
                     << "  wdata=" << req_data;
                 $;
 
-                wait until ($resp_port.peek(resp_tok)$);
+                wait until (this_phase == 0 and $resp_port.peek(resp_tok)$);
                 $
                 pulled = resp_port.pull(resp_tok);
                 sitar::unpack(resp_tok, resp_error, resp_rdata);

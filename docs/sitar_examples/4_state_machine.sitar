@@ -15,14 +15,15 @@
 //
 // Expected output (3 complete main cycles):
 // (0,0)  TOP.ctrl.main : [MAIN] GREEN  (main=GREEN  side=RED)
+// (0,0)  TOP.ctrl.side : [SIDE] RED -- waiting for main
 // (15,0) TOP.ctrl.main : [MAIN] YELLOW (main=YELLOW side=RED)
-// (18,0) TOP.ctrl.main : [MAIN] RED
-// (19,0) TOP.ctrl.side : [SIDE] GREEN  (main=RED    side=GREEN)
-// (27,0) TOP.ctrl.side : [SIDE] YELLOW (main=RED    side=YELLOW)
-// (30,0) TOP.ctrl.side : [SIDE] RED -- releasing main
-// (31,0) TOP.ctrl.main : [MAIN] GREEN
+// (18,0) TOP.ctrl.main : [MAIN] RED -- releasing side road
+// (19,0) TOP.ctrl.side : [SIDE] GREEN  (main=RED  side=GREEN)
+// (27,0) TOP.ctrl.side : [SIDE] YELLOW (main=RED  side=YELLOW)
+// (30,1) TOP.ctrl.side : [SIDE] RED -- waiting for main
+// (31,0) TOP.ctrl.main : [MAIN] GREEN  (main=GREEN  side=RED)
 // ... (two more complete sequences)
-// Simulation stopped at time (93,...)
+// Simulation stopped at time (93,0)
 
 
 // --8<-- [start:top]
@@ -90,7 +91,7 @@ module MainRoad
                 while (not ok) end do;
 
                 // Wait for Side to complete its sequence
-                wait until (from_side.peek());
+                wait until (this_phase == 0 and $from_side.peek(sig)$);
                 $from_side.pull(sig);$;
 
                 $seq++; state = GREEN;$;
@@ -122,7 +123,7 @@ module SideRoad
             // ---- RED: wait for main to release ----
             if (state == RED) then
                 $log << endl << "[SIDE] RED -- waiting for main";$;
-                wait until (from_main.peek());
+                wait until (this_phase == 0 and $from_main.peek(sig)$);
                 $from_main.pull(sig); state = GREEN;$;
             end if;
 

@@ -12,12 +12,11 @@
 // --8<-- [start:top]
 module Top
     // ---------------------------------------------------------------
-    // Change STOP_MODE to 1, 2, or 3 to select the termination style
-    parameter int STOP_MODE  = 1
-    parameter int MAX_TOKENS = 10
-    parameter int MAX_CYCLES = 25
+    // Change the first template argument to System<...> below to 1, 2,
+    // or 3 to select the termination style. (Top itself cannot take
+    // parameters: it is instantiated directly, not as a template.)
+    submodule sys : System<1, 10, 25>
     // ---------------------------------------------------------------
-    submodule sys : System<STOP_MODE, MAX_TOKENS, MAX_CYCLES>
 end module
 
 module System

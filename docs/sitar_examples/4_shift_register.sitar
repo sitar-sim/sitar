@@ -6,13 +6,13 @@
 //
 // Expected output (N=4, DELAY=1, NUM_TOKENS=6):
 // (0,1) TOP.S.prod :  sent 0
-// (0,1) TOP.S.prod :  sent 1
-// (0,1) TOP.S.prod :  sent 2
+// (1,1) TOP.S.prod :  sent 1
+// (3,1) TOP.S.prod :  sent 2
 // ...
-// (5,0) TOP.S.cons :  received 0
-// (6,0) TOP.S.cons :  received 1
+// (9,0)  TOP.S.cons :  received 0
+// (11,0) TOP.S.cons :  received 1
 // ...
-// Simulation stopped at time (10,0)
+// Simulation stopped at time (19,1)
 
 // --8<-- [start:structure]
 module Top

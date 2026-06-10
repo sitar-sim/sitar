@@ -57,7 +57,7 @@ sitar::unpack(t, val);   // deserialize back into val
 
 ## Producer
 
-The Producer generates tokens 0, 1, 2, ... and pushes as many as the output net will accept each phase. `push()` returns `false` when the net is full; the inner `while` loop stops and the module advances to the next phase.
+The Producer generates tokens 0, 1, 2, ... and pushes as many as the output net will accept each phase. `push()` returns `false` when the net is full; the inner `while` loop stops and the module advances to the next phase. With `n[0]` declared at `capacity 1`, this means at most one token per phase: the loop pushes once, the net becomes full, and the next `push()` fails immediately.
 
 ``` sitar linenums="1"
 --8<-- "docs/sitar_examples/4_shift_register.sitar:producer"
@@ -90,18 +90,24 @@ The Consumer drains all available tokens in phase 0 each cycle, unpacking and lo
 
 ## Expected output
 
-With `N=4`, `DELAY=1`, and `NUM_TOKENS=6`, the first token arrives at the Consumer after 4 pipeline stages (approximately cycle 5):
+With `N=4`, `DELAY=1`, and `NUM_TOKENS=6`:
 
 ```
 (0,1)  TOP.S.prod :  sent 0
-(0,1)  TOP.S.prod :  sent 1
-(0,1)  TOP.S.prod :  sent 2
-...
-(5,0)  TOP.S.cons :  received 0
-(6,0)  TOP.S.cons :  received 1
-(7,0)  TOP.S.cons :  received 2
-...
-Simulation stopped at time (10,0)
+(1,1)  TOP.S.prod :  sent 1
+(3,1)  TOP.S.prod :  sent 2
+(5,1)  TOP.S.prod :  sent 3
+(7,1)  TOP.S.prod :  sent 4
+(9,0)  TOP.S.cons :  received 0
+(9,1)  TOP.S.prod :  sent 5
+(11,0) TOP.S.cons :  received 1
+(13,0) TOP.S.cons :  received 2
+(15,0) TOP.S.cons :  received 3
+(17,0) TOP.S.cons :  received 4
+(19,0) TOP.S.cons :  received 5
+Simulation stopped at time (19,1)
 ```
 
-Changing the instantiation to `ShiftRegister<8>` extends the pipeline to 8 stages; no other change to the model is needed.
+The first token takes 9 cycles to cross the pipeline: each of the 4 stages contributes 1 cycle of net latency (pull is only visible one cycle after the matching push) plus `DELAY=1` cycle of processing, and the final net hop into the Consumer adds one more cycle. After token 0 and token 1 (pushed back-to-back at `(0,1)` and `(1,1)`, since `n[0]` is still empty for both), `n[0]`'s capacity-1 buffer is occupied for 2 cycles per token (1 cycle of net latency before stage 0 can pull it, plus its own `DELAY=1`), so the Producer can push only once every 2 cycles thereafter: `sent 2` at `(3,1)`, `sent 3` at `(5,1)`, and so on. Once the pipeline is full, the Consumer receives one token every 2 cycles, alternating phase 0 (receive) and phase 1 (producer send).
+
+Changing the instantiation to `ShiftRegister<8>` extends the pipeline to 8 stages; no other change to the model is needed, though the per-token latency and the simulation's stop time will increase accordingly.

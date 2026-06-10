@@ -87,7 +87,7 @@ The module cycles through GREEN, YELLOW, and RED states using `if` blocks on a `
 
 ## Side road FSM
 
-Side starts in RED and blocks on `wait until (from_main.peek())`. Once Main releases it, Side completes its GREEN-YELLOW-RED cycle and replies with its own signal token.
+Side starts in RED and blocks on `wait until (this_phase == 0 and from_main.peek(sig))`. Once Main releases it, Side completes its GREEN-YELLOW-RED cycle and replies with its own signal token.
 
 ``` sitar linenums="1"
 --8<-- "docs/sitar_examples/4_state_machine.sitar:side_fsm"
@@ -99,18 +99,18 @@ Side starts in RED and blocks on `wait until (from_main.peek())`. Once Main rele
 
 ```
 (0,0)  TOP.ctrl.main : [MAIN] GREEN  (main=GREEN  side=RED)
+(0,0)  TOP.ctrl.side : [SIDE] RED -- waiting for main
 (15,0) TOP.ctrl.main : [MAIN] YELLOW (main=YELLOW side=RED)
 (18,0) TOP.ctrl.main : [MAIN] RED -- releasing side road
-(19,0) TOP.ctrl.side : [SIDE] RED -- waiting for main
 (19,0) TOP.ctrl.side : [SIDE] GREEN  (main=RED  side=GREEN)
 (27,0) TOP.ctrl.side : [SIDE] YELLOW (main=RED  side=YELLOW)
-(30,0) TOP.ctrl.side : [SIDE] RED -- releasing main
+(30,1) TOP.ctrl.side : [SIDE] RED -- waiting for main
 (31,0) TOP.ctrl.main : [MAIN] GREEN  (main=GREEN  side=RED)
 ...
-Simulation stopped at time (93,...)
+Simulation stopped at time (93,0)
 ```
 
-The simulation runs for three complete main-road sequences (controlled by `seq >= 3` in `MainRoad`). One complete cycle — Main green through Side red — spans 15 + 3 + 8 + 3 = 29 cycles plus one cycle of handshake overhead.
+The simulation runs for three complete main-road sequences (controlled by `seq >= 3` in `MainRoad`). Each sequence spans 31 cycles: 15 + 3 + 8 + 3 = 29 cycles for the four light phases, plus 2 cycles of handshake overhead (one cycle for each direction of the signal exchange between Main and Side). The "SIDE -- waiting for main" message is logged once per sequence, when Side's `behavior` loop re-enters its RED branch (immediately after Side has pushed its own release signal back to Main).
 
 !!! tip "Extending the model"
     To add a third road or a pedestrian crossing phase, introduce additional FSM modules and extend the handshake chain. Each FSM remains purely Moore: only its own state determines its output, and all coordination is via explicit signal tokens.
