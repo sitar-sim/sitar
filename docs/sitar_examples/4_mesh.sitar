@@ -1,4 +1,7 @@
-// NxM toroidal mesh interconnect.
+// NxM toroidal mesh interconnect: 
+//
+// An example to illustrate the creation of 2D arrays of modules and nets in Sitar 
+// and their interconnection.
 //
 // Each node (row, col) has two outports (East, South) and two inports (East, South).
 // Nets are directional: net_e[i][j] carries a token going East from node[i][j]
