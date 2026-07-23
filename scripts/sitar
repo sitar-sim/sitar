@@ -141,7 +141,7 @@ compile_parser.add_argument("-o", "--output", dest="OUTPUT_FILE", type=str, acti
 compile_parser.add_argument("-d", "--directory", dest="CODE_DIR", type=str, action='append', help="directory containing code to be compiled")
 compile_parser.add_argument("-m", "--main_file", dest="MAIN_FILE", type=str, action='store', default=main_cpp_location, 
 help="Cpp file that instantiates the Top module and starts simulation (otherwise uses a default file <sitar folder>/Compiler/sitar_default_main.cpp)")
-compile_parser.add_argument('--cflags', dest="C_FLAGS", type=str, action='store', default="", help="Additional flags for the compile step only (passed to CCFLAGS, i.e. g++ -c). Does NOT affect linking -- use -l/--libs to link against extra libraries.")
+compile_parser.add_argument('--cflags', dest="C_FLAGS", type=str, action='store', default="", help="Additional flags for the compile step only (passed to CCFLAGS, i.e. g++ -c). Does NOT affect linking -- use -l/--libs to link against extra libraries. If the value itself starts with '-', use the --cflags=VALUE form (e.g. --cflags=-O0) so it isn't mistaken for another option.")
 compile_parser.add_argument("-l", "--libs", dest="LIBS", type=str, action='append', help="Extra library to link against, without the -l prefix (e.g. -l quadmath). Can be repeated (-l quadmath -l gomp) and/or comma-separated (-l quadmath,gomp).")
 
 

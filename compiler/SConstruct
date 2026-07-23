@@ -46,7 +46,8 @@ else:
 	COMPILE_WITH_LOGGING=False
 
 additional_flags=DIRS.pop(0)
-ADDITIONAL_FLAGS += additional_flags
+if additional_flags:
+	ADDITIONAL_FLAGS += " " + additional_flags
 
 #seventh line specifies extra libraries to link against (comma separated, no "-l" prefix)
 extra_libs_line=DIRS.pop(0)

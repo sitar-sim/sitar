@@ -93,6 +93,8 @@ To see all options:
 sitar translate -h
 ```
 
+See the [CLI Reference](cli_reference.md) for the full list of options with examples.
+
 ### Step 2: Compile
 
 Compiles the generated C++ together with the Sitar simulation kernel into a simulation executable. Run this from the same directory where you ran the translate step so that the **`Output/`** directory is used as the location of the translated code by default.
@@ -112,6 +114,8 @@ To see all options:
 ```bash
 sitar compile -h
 ```
+
+See the [CLI Reference](cli_reference.md) for the full list of options with examples.
 
 ### Step 3: Run
 

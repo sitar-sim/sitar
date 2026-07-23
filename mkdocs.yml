@@ -70,6 +70,7 @@ nav:
   - Introduction:
       - What is Sitar: index.md
       - Getting Started: getting_started.md
+      - CLI Reference: cli_reference.md
 
   - Basic Concepts:
       - Modules and Nets: 2_basic_concepts/components_modules_nets.md
