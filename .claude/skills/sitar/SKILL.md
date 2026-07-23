@@ -27,7 +27,8 @@ Useful flags:
 | `sitar compile` | `-m FILE` | custom main.cpp (otherwise `compiler/sitar_default_main.cpp`) |
 | `sitar compile` | `--openmp` | parallel build (links `-fopenmp`, `-lgomp`) |
 | `sitar compile` | `--no-logging` | omit `-DSITAR_ENABLE_LOGGING`; `log<<...` becomes a no-op |
-| `sitar compile` | `--cflags "..."` | extra g++ flags |
+| `sitar compile` | `--cflags "..."` | extra compile-step flags (`CCFLAGS`, i.e. `g++ -c`) -- does **not** affect linking |
+| `sitar compile` | `-l LIB` / `--libs LIB` | link against an extra library, without the `-l` prefix (e.g. `-l quadmath`). Repeatable (`-l quadmath -l gomp`) and/or comma-separated (`-l quadmath,gomp`) |
 
 `./sitar_sim N` caps simulation at `N` cycles (default 100). `stop simulation` inside the model is the other stop condition; whichever fires first wins.
 

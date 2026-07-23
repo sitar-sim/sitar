@@ -36,10 +36,7 @@ Todo:
 
 4. Syntax highlighting and editor keymappings support for VSCODE, add to getting started in docs
 
-5. 
-
-
-
+5.
 
 
 

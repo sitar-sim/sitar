@@ -84,7 +84,15 @@ def sitar_compile(args):
 	#6
 	fo.write(str(args.C_FLAGS)+"\n")
 
-	
+	#seventh line specifies extra libraries to link against
+	#7
+	extra_libs=[]
+	if args.LIBS:
+		for item in args.LIBS:
+			extra_libs.extend([lib.strip() for lib in item.split(",") if lib.strip()])
+	fo.write(",".join(extra_libs)+"\n")
+
+
 	#Next is a list of directories containing user code
 	if not args.CODE_DIR:
 		args.CODE_DIR=["./Output"]
@@ -133,7 +141,8 @@ compile_parser.add_argument("-o", "--output", dest="OUTPUT_FILE", type=str, acti
 compile_parser.add_argument("-d", "--directory", dest="CODE_DIR", type=str, action='append', help="directory containing code to be compiled")
 compile_parser.add_argument("-m", "--main_file", dest="MAIN_FILE", type=str, action='store', default=main_cpp_location, 
 help="Cpp file that instantiates the Top module and starts simulation (otherwise uses a default file <sitar folder>/Compiler/sitar_default_main.cpp)")
-compile_parser.add_argument('--cflags', dest="C_FLAGS", type=str, action='store', default="", help="Additional flags to be used for the compilation of the generated C++ code.")
+compile_parser.add_argument('--cflags', dest="C_FLAGS", type=str, action='store', default="", help="Additional flags for the compile step only (passed to CCFLAGS, i.e. g++ -c). Does NOT affect linking -- use -l/--libs to link against extra libraries.")
+compile_parser.add_argument("-l", "--libs", dest="LIBS", type=str, action='append', help="Extra library to link against, without the -l prefix (e.g. -l quadmath). Can be repeated (-l quadmath -l gomp) and/or comma-separated (-l quadmath,gomp).")
 
 
 compile_parser.add_argument('--openmp', dest="WITH_OPENMP", action='store_true', help="Compile with openMp support ")

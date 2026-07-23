@@ -48,6 +48,10 @@ else:
 additional_flags=DIRS.pop(0)
 ADDITIONAL_FLAGS += additional_flags
 
+#seventh line specifies extra libraries to link against (comma separated, no "-l" prefix)
+extra_libs_line=DIRS.pop(0)
+EXTRA_LIBS=[lib.strip() for lib in extra_libs_line.split(",") if lib.strip()]
+
 
 
 #Check if sitar_Top.h exists
@@ -95,6 +99,7 @@ print("scons messages:\n")
 env = Environment()
 Libs=[]
 Libpath=[]
+Libs.extend(EXTRA_LIBS)		#libraries requested via `sitar compile -l/--libs`
 
 #===========================================================
 #compiler flags that are always enabled:
@@ -149,10 +154,6 @@ if(COMPILE_WITH_LOGGING==True) :
 
 	
 
-#Libs.append('pthread')
-#Libs.append('gomp')
-#Libs.append('m')
-#Libs.append('quadmath')
 ##static:
 #env.Append(CCFLAGS =  '-static')
 ##linker flags
