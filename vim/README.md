@@ -1,10 +1,10 @@
-To enable syntax highlighting for sitar descriptions 
-copy the file sitar.vim into the folder ~/.vim/syntax
+# Vim syntax highlighting for Sitar
 
-To auto-detect filetype based on .sitar extension in the filename and 
-apply the syntax, add the following lines to your .vimrc file:
+To enable syntax highlighting for Sitar descriptions, copy the file `sitar.vim` into the folder `~/.vim/syntax`.
 
+To auto-detect filetype based on the `.sitar` extension in the filename and apply the syntax, add the following lines to your `.vimrc` file:
 
+```vim
 "========================================
 " vim settings for sitar files
 "========================================
@@ -26,24 +26,24 @@ function! FT_sitar()
 	hi Folded ctermbg=Black
 	set foldtext=MyFoldText()
 	set shell=bash\ -i
-	
+
 	"" Shortcuts for translating and compiling sitar descriptions
 	"" <F8> for TRANSLATE : generate code in a dir ./output/
 	nmap <F8> :set makeprg=sitar\ translate\ \"%:p\"\ <CR>:make<CR>:copen<CR><C-w>w
 	"" <F9> for COMPILE :
 	nmap <F9> :set makeprg=sitar\ compile\ <CR>:make<CR><C-w>w
-	
+
 	" <F5> and <F6> to jump through error list
 	" next error:
-	nmap <F5> :cN<CR>  
+	nmap <F5> :cN<CR>
 	" previous error:
-	nmap <F6> :cn<CR>  
-	
+	nmap <F6> :cn<CR>
+
 
 	" % MATCHING (requires matchit plugin)
 	"	let s:notend = '\%(\<end\s\+\)\@<!'
 	"	let b:match_skip = 's:sitarCodeBlock\|sitarComment\|sitarComment2\|sitarString'
-	"	
+	"
 	"	let b:match_words = s:notend . '\<if\>:\<else\>:\<end\s\+if\>,'.
 	"		\s:notend . '\<do\>:\<while\>,'.
 	"		\s:notend . '\<module\>:\<end\s\+module\>,'.
@@ -52,4 +52,4 @@ function! FT_sitar()
  endfunction
 au BufRead,BufNewFile *.sitar set filetype=sitar
 "======================================================================
-
+```

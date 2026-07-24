@@ -197,10 +197,10 @@ The third message (at cycle 5) never appears. The simulation was cut off at cycl
 
 ## The Examples Folder
 
-The `examples/` folder in the repository contains ready-to-run models covering all major language features, each translatable and compilable in the same way. See `examples/README` for further notes.
+The `examples/` folder in the repository contains ready-to-run models covering all major language features, each translatable and compilable in the same way. See `examples/README.md` for further notes.
 
 !!! tip "Vim users"
-    Syntax highlighting and editor keymappings for `sitar translate` and `sitar compile` are available. See `vim/README` in the repository.
+    Syntax highlighting and editor keymappings for `sitar translate` and `sitar compile` are available. See `vim/README.md` in the repository.
 
 ---
 
