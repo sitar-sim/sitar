@@ -27,5 +27,12 @@ The Sitar translator has been created using the [ANTLRv3 tool](http://www.antlr3
    - `./grammar/sitar.g`, or
    - `./grammar/output_template.g`
 4. In `File -> Preferences -> General`, set the output path as `./parser`, then click `Generate -> Generate Code` to generate code for the lexer and parser.
+
+   Alternatively, without the GUI (e.g. no display available): the jar also bundles ANTLR3's underlying command-line generator, `org.antlr.Tool`, which can be invoked directly:
+   ```sh
+   cd grammar
+   java -cp ../antlrworks-1.4.3.jar org.antlr.Tool -o ../parser/antlr_generated sitar.g
+   ```
+   (use `output_template.g` instead of `sitar.g` to regenerate that lexer/parser).
 5. Run `scons` in the `./parser` folder to generate the translator executable.
 6. To test the translator, run it on Sitar descriptions in the `examples` folder.

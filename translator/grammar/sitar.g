@@ -2326,6 +2326,7 @@ atomic_expression_cf  returns[std::string text]
         |str1=STRING         {$text=((const char*)$str1.text->chars);}
         |id1=identifier    {$text=((const char*)$id1.text->chars);}
         | exp=expression_code_block{$text=$exp.text;}
+        | b1=BOOL {$text=((const char*)$b1.text->chars);}
         ;
         
      
