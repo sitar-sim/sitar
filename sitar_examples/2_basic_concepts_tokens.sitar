@@ -1,0 +1,77 @@
+// --8<-- [start:model]
+// A producer pushes integer-valued tokens to a consumer, one per cycle.
+// Uses sitar::pack and sitar::unpack from sitar_token_utils.h.
+
+module Top
+    submodule sys : System
+end module
+
+module System
+    submodule producer : Producer
+    submodule consumer : Consumer
+    net channel : capacity 10 width 4    // 4-byte payload carries one int
+    producer.outp => channel
+    consumer.inp  <= channel
+end module
+
+module Producer
+    outport outp : width 4
+    decl $token<4> t; int count; int payload;$
+    init $count = 0; payload=42;$
+    behavior
+        do
+            wait until (this_phase == 1);
+            $
+            t.ID = count;
+            sitar::pack(t, payload);
+            if (outp.push(t))
+                log << endl << "pushed token: " << t.info()<<" value:"<<payload;
+            count++;
+			payload++;
+            $;
+            wait;
+        while (count < 5) end do;
+		wait(2,0);
+        stop simulation;
+    end behavior
+end module
+
+module Consumer
+    inport inp : width 4
+    decl $token<4> t; int value;$
+    behavior
+        do
+            wait until (this_phase == 0);
+            $
+            while (inp.pull(t))
+            {
+                sitar::unpack(t, value);
+                log << endl << "pulled token: " << t.info()<<" value:"<<value;
+            }
+            $;
+            wait;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:model]
+
+// Expected output:
+// Model size (size of TOP in Bytes):2464
+// Running simulation...
+// Simulation time not specified
+// ( usage: <simulation_executable> <simulation time in cycles> )
+// Default maximum simulation time = 100 cycles
+// 
+// 
+// (0,1)TOP.sys.producer:pushed token: (type=0, ID=0, payload=0x2a 00 00 00 ) value:42
+// (1,0)TOP.sys.consumer:pulled token: (type=0, ID=0, payload=0x2a 00 00 00 ) value:42
+// (1,1)TOP.sys.producer:pushed token: (type=0, ID=1, payload=0x2b 00 00 00 ) value:43
+// (2,0)TOP.sys.consumer:pulled token: (type=0, ID=1, payload=0x2b 00 00 00 ) value:43
+// (2,1)TOP.sys.producer:pushed token: (type=0, ID=2, payload=0x2c 00 00 00 ) value:44
+// (3,0)TOP.sys.consumer:pulled token: (type=0, ID=2, payload=0x2c 00 00 00 ) value:44
+// (3,1)TOP.sys.producer:pushed token: (type=0, ID=3, payload=0x2d 00 00 00 ) value:45
+// (4,0)TOP.sys.consumer:pulled token: (type=0, ID=3, payload=0x2d 00 00 00 ) value:45
+// (4,1)TOP.sys.producer:pushed token: (type=0, ID=4, payload=0x2e 00 00 00 ) value:46
+// (5,0)TOP.sys.consumer:pulled token: (type=0, ID=4, payload=0x2e 00 00 00 ) value:46
+// Simulation stopped at time (7,0)
+

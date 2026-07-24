@@ -1,0 +1,46 @@
+// --8<-- [start:model]
+
+module Top
+    behavior
+        // S1: instantaneous code block
+        $log << endl << "Starting at " << current_time;$;
+
+        // S2: do-while loop
+        do
+            // S2.1: wait (suspends module)
+            wait(1,0);
+            // S2.2: instantaneous code block
+            $log << endl << "tick at " << current_time;$;
+        while (this_cycle < 5) end do;
+
+        // S3: if-else
+        if (this_cycle == 5) then
+            // S3.T.1: parallel block (two concurrent branches)
+            [
+                // branch A
+                wait(2,0);
+                $log << endl << "branch A done at " << current_time;$;
+            ||
+                // branch B (instantaneous)
+                $log << endl << "branch B done at " << current_time;$;
+            ];
+        else
+            $log << endl << "cycle is not 5, this should not happen";$;
+        end if;
+
+        // S4: stop simulation
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:model]
+
+// Expected output:
+// (0,0)TOP   :Starting at (0,0)
+// (1,0)TOP   :tick at (1,0)
+// (2,0)TOP   :tick at (2,0)
+// (3,0)TOP   :tick at (3,0)
+// (4,0)TOP   :tick at (4,0)
+// (5,0)TOP   :tick at (5,0)
+// (5,0)TOP   :branch B done at (5,0)
+// (7,0)TOP   :branch A done at (7,0)
+// Simulation stopped at time (7,0)

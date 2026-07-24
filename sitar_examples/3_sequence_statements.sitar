@@ -1,0 +1,48 @@
+// Demonstrates: all atomic statement forms in a single behavior.
+//
+// Expected output:
+// (0,0)TOP.m      :start: x=42  time=(0,0)
+// (2,0)TOP.m      :after wait(2,0):          time=(2,0)
+// (2,1)TOP.m      :after wait:               time=(2,1)
+// (5,0)TOP.m      :after wait until cycle>=5: time=(5,0)
+// (5,0)TOP.m      :stopping at               time=(5,0)
+// Simulation stopped at time (5,0)
+
+// --8<-- [start:atomic]
+module Top
+    submodule m : Demo
+end module
+
+module Demo
+    decl $int x;$
+    init $x = 0;$
+    behavior
+
+        // code block: instantaneous embedded C++ code
+        $
+        x = 42;
+        log << endl << "start: x=" << x << "  time=" << current_time;
+        $;
+
+        // wait(c, p): suspend for c cycles and p phases
+        wait(2, 0);
+        $log << endl << "after wait(2,0):          time=" << current_time;$;
+
+        // bare wait: shorthand for wait(0,1) - advance one phase
+        wait;
+        $log << endl << "after wait:               time=" << current_time;$;
+
+        // wait until: suspend until condition is true at start of a phase
+        wait until (this_cycle >= 5);
+        $log << endl << "after wait until cycle>=5: time=" << current_time;$;
+
+        // nothing: no-op placeholder
+        nothing;
+
+        // stop simulation: halt simulation at end of current phase
+        $log << endl << "stopping at               time=" << current_time;$;
+        stop simulation;
+
+    end behavior
+end module
+// --8<-- [end:atomic]

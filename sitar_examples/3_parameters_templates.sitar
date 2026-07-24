@@ -1,0 +1,32 @@
+// Demonstrates: parameter declarations, default values,
+// and angle-bracket instantiation of parameterized modules.
+//
+// Expected output:
+// (1,0)TOP.c      :counter c done  waited 1 cycles
+// (3,0)TOP.b      :counter b done  waited 3 cycles
+// (5,0)TOP.a      :counter a done  waited 5 cycles
+// Simulation stopped at time (6,0)
+
+// --8<-- [start:model]
+module Top
+    submodule a : Counter<>        // all defaults: N=5, label='a'
+    submodule b : Counter<3, 'b'>  // N=3, label='b'
+    submodule c : Counter<1, 'c'>  // N=1, label='c'
+    behavior
+        wait(6, 0);
+        stop simulation;
+    end behavior
+end module
+
+module Counter
+    parameter int  N     = 5    // number of cycles to wait before logging
+    parameter char label = 'a'  // single-character identifier for log output
+    behavior
+        wait(N, 0);
+        $
+        log << endl << "counter " << label << " done"
+                    << "  waited " << N << " cycles";
+        $;
+    end behavior
+end module
+// --8<-- [end:model]

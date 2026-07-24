@@ -1,0 +1,35 @@
+// --8<-- [start:model]
+// Example illustrating hierarchy and built-in navigation functions.
+// TOP contains a1 (type A).
+// a1 contains b1 and b2 (type B).
+// b1 contains c1 (type C).
+
+module Top
+    submodule a1 : A
+end module
+
+module A
+    submodule b1,b2 : B
+    behavior
+        $
+        log << endl   << "instance name : " << instanceId();
+        log << "\n\t" << "full name     : " << hierarchicalId();
+        log << "\n\t" << "parent        : " << parent()->instanceId();
+        log << "\n\t" << "hierarchy     : " << "\n" << getInfo();
+        $;
+    end behavior
+end module
+
+module B
+    submodule c1 : C
+    behavior
+        $log << endl << "Hello from "<<hierarchicalId();$;
+    end behavior
+end module
+
+module C
+    behavior
+        $log << endl << "Hello from "<<hierarchicalId();$;
+    end behavior
+end module
+// --8<-- [end:model]

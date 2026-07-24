@@ -1,0 +1,339 @@
+// =====================================================================
+// Pipelined Processor --- a 4-stage pipeline executing NUM_THREADS
+// hardware threads in round-robin.
+// ---------------------------------------------------------------------
+// Why this design is built as one module with a parallel block:
+//
+//   A pipeline has zero-latency connectivity between adjacent stages:
+//   within the same clock cycle, stage i must read the register written
+//   by stage i-1 at the same cycle boundary. Modeling each stage as a
+//   separate module with nets in between would enforce Sitar's minimum
+//   1-cycle net latency on every stage-to-stage hop, stretching the
+//   pipeline out in time.
+//
+//   Instead, all four stages live inside a single module,
+//   `Pipelined_Processor`, as branches of a parallel block. They share
+//   the parent module's state (the pipeline registers) directly via
+//   pointers, with a valid-bit handshake on each register. Branches of
+//   a parallel block iterate until convergence within a phase, so a
+//   stage can unblock its upstream stage in the same cycle --- which is
+//   exactly the pipelined-flow-through-all-stages-in-one-cycle behavior
+//   we want.
+//
+//   Each stage is an instance of a single `Stage` procedure,
+//   parameterized on its DELAY. The procedure reads from its own
+//   `stage_input` register, waits DELAY cycles, and writes to its
+//   `stage_output` register (which is the next stage's input). The
+//   Fetch stage has no upstream, so it self-fills its `stage_input`
+//   from the thread PCs; the Writeback stage has no downstream, so it
+//   just retires.
+//
+//   Parent-module `init` (which runs AFTER all child constructors in
+//   C++ order) wires each procedure's ThreadData pointers to the
+//   shared state and sets the stop criterion on exactly one stage.
+// =====================================================================
+
+
+// --8<-- [start:top]
+module Top
+    // NUM_THREADS=2 => two interleaved hardware threads.
+    submodule proc : Pipelined_Processor<2>
+end module
+// --8<-- [end:top]
+
+
+// --8<-- [start:pipelined_processor]
+module Pipelined_Processor
+
+    // Number of hardware threads. Fetch round-robins through them.
+    parameter int NUM_THREADS = 2
+    
+    // NUM_STAGES is fixed at 4 (Fetch/Decode/Execute/Writeback).
+
+    include 
+    $
+    #include "PipelineTypes.h"
+    #include <iomanip>
+    #include <sstream>
+    $
+
+    // Shared state owned by the processor and pointed to by every stage
+    // via ThreadData.
+    decl 
+    $
+    static const int NUM_STAGES = 4;
+
+    // Per-thread program counter. Incremented by Fetch each time that
+    // thread is selected.
+    int pc[NUM_THREADS];
+
+    // Index of the thread Fetch will grab next. Advances round-robin.
+    int active_thread;
+
+    // One pipeline register per stage. stage_inputs[i] is where stage i
+    // holds the instruction it is currently working on. Adjacent stages
+    // share a register: stage i's "stage_output" points at the same
+    // memory as stage (i+1)'s "stage_input".
+    //
+    // The valid bit is the inter-stage handshake:
+    //   - An upstream stage sets valid=true when it commits a new instr.
+    //   - The downstream stage sets valid=false after it captures the
+    //     instr for processing (so the upstream's commit slot is free
+    //     again for the next cycle).
+    PipelineReg stage_inputs[NUM_STAGES];
+
+    // Human-readable stage names, used only in the log output.
+    std::string stage_names[NUM_STAGES];
+    $
+
+    // The four stages are procedure instances. Each is parameterized by
+    // its processing delay; all four happen to use DELAY=1 here, but
+    // changing any value >=0 (e.g. Execute<3>) just works. The handshake
+    // absorbs the change automatically. 
+    // Note: At-least one of the stage must have a non-zero delay
+    procedure fetch     : Stage<1>
+    procedure decode    : Stage<1>
+    procedure execute   : Stage<1>
+    procedure writeback : Stage<1>
+
+    // Parent's init runs AFTER every child constructor (C++ member
+    // construction order). That lets us override the defaults each
+    // Stage procedure set for itself (id=0, name="", nullptr pointers,
+    // stop_when_total_executed=-1).
+    init 
+    $
+    // --- initialize shared state ------------------------------------
+    for (int i = 0; i < NUM_THREADS; i++) pc[i] = 0;
+    active_thread = 0;
+    for (int i = 0; i < NUM_STAGES; i++) {
+        stage_inputs[i].valid     = false;
+        stage_inputs[i].thread_id = 0;
+        stage_inputs[i].pc        = 0;
+    }
+    stage_names[0] = "Fetch";
+    stage_names[1] = "Decode";
+    stage_names[2] = "Execute";
+    stage_names[3] = "Writeback";
+
+    // --- wire every stage to the shared state -----------------------
+    // All stages see the same pc[] array, active_thread, and
+    // num_threads. Only Fetch actually uses these three, but passing
+    // them uniformly keeps the wiring symmetric.
+    fetch.td.num_threads     = NUM_THREADS;
+    fetch.td.pc              = pc;
+    fetch.td.active_thread   = &active_thread;
+    decode.td.num_threads    = NUM_THREADS;
+    decode.td.pc             = pc;
+    decode.td.active_thread  = &active_thread;
+    execute.td.num_threads   = NUM_THREADS;
+    execute.td.pc            = pc;
+    execute.td.active_thread = &active_thread;
+    writeback.td.num_threads   = NUM_THREADS;
+    writeback.td.pc            = pc;
+    writeback.td.active_thread = &active_thread;
+
+    // --- per-stage identity + register chain ------------------------
+    // Each stage's stage_input is stage_inputs[id]; its stage_output is
+    // stage_inputs[id+1], except the last stage (writeback) which has
+    // no output register (nullptr) and retires instructions outright.
+    fetch.id = 0;     fetch.name     = stage_names[0];
+    fetch.td.stage_input   = &stage_inputs[0];
+    fetch.td.stage_output  = &stage_inputs[1];
+
+    decode.id = 1;    decode.name    = stage_names[1];
+    decode.td.stage_input  = &stage_inputs[1];
+    decode.td.stage_output = &stage_inputs[2];
+
+    execute.id = 2;   execute.name   = stage_names[2];
+    execute.td.stage_input  = &stage_inputs[2];
+    execute.td.stage_output = &stage_inputs[3];
+
+    writeback.id = 3; writeback.name = stage_names[3];
+    writeback.td.stage_input  = &stage_inputs[3];
+    writeback.td.stage_output = nullptr;
+
+    // --- stop criterion ---------------------------------------------
+    // Any stage can trigger `stop simulation` based on its own retired-
+    // instruction count. Setting the threshold on writeback makes the
+    // simulation stop once N instructions have fully traversed the
+    // pipeline. Leaving the value at the procedure's default (-1)
+    // disables the check for all other stages.
+    writeback.stop_when_total_executed = 10;
+    $
+
+    // The entire pipeline is one parallel block: four stage branches
+    // plus one logging branch. Within each phase, branches execute in
+    // written order and the kernel re-runs them until all have
+    // converged (hit a wait). This is what lets, e.g., fetch commit in
+    // iteration 3 of a phase once decode invalidated its input in
+    // iteration 2 -- i.e. one instr moves through all stages per
+    // cycle.
+    behavior
+        [
+            run fetch;
+        ||
+            run decode;
+        ||
+            run execute;
+        ||
+            run writeback;
+        ||
+            // Logging: one line per cycle, printed in PHASE 1 rather
+            // than phase 0. Phase 1 sees the stable end-of-phase-0
+            // state, after all convergence iterations have settled, so
+            // every stage_input carries its currently-working
+            // instruction. If we logged in phase 0, the snapshot would
+            // catch the pipeline mid-handshake (some stages would show
+            // `(---)` for one cycle as their input is momentarily
+            // invalidated before the upstream commit completes in a
+            // later iteration of the same phase).
+            do
+                wait until (this_phase == 1);
+                $
+                log << endl;
+                for (int i = 0; i < NUM_STAGES; i++) {
+                    std::ostringstream ss;
+                    if (stage_inputs[i].valid)
+                        ss << "(t=" << stage_inputs[i].thread_id
+                           << ",pc=" << stage_inputs[i].pc << ")";
+                    else
+                        ss << "(---)";
+                    log << "| " << std::setw(10) << std::left << stage_names[i]
+                        << std::setw(11) << std::left << ss.str() << " ";
+                }
+                log << "|";
+                $;
+                wait;   // advance one phase -> next cycle's phase 0
+            while (1) end do;
+        ];
+    end behavior
+end module
+// --8<-- [end:pipelined_processor]
+
+
+// --8<-- [start:stage]
+// A single reusable procedure for every pipeline stage. Stage behavior
+// is uniform except that the Fetch stage (id==0) has no upstream, so
+// it self-fills its stage_input each iteration instead of waiting for
+// a producer. The Writeback stage (id==3) has no downstream
+// (stage_output==nullptr), so it retires instructions outright instead
+// of committing to the next stage.
+procedure Stage
+
+    // How many cycles this stage takes to "process" one instruction.
+    // Hardwired at instantiation (e.g. procedure execute : Stage<3>).
+    parameter int DELAY = 1
+
+    include $
+    #include "PipelineTypes.h"
+    $
+
+    decl $
+    // Identity of this stage within its parent processor. Set by the
+    // parent's init after construction. id==0 means Fetch (self-fill),
+    // other ids are regular stages.
+    int         id;
+    std::string name;
+
+    // All pointers to parent-owned state: per-thread PCs, the
+    // round-robin thread selector, and this stage's input/output
+    // pipeline registers. See PipelineTypes.h.
+    ThreadData  td;
+
+    // Running count of instructions this stage has committed/retired.
+    int         total_instr_executed;
+
+    // If non-negative, the stage triggers `stop simulation` once its
+    // counter reaches this value. Default -1 (disabled); the parent
+    // sets a positive value on the last stage only.
+    int         stop_when_total_executed;
+    $
+    init $
+    id                       = 0;
+    name                     = "";
+    total_instr_executed     = 0;
+    stop_when_total_executed = -1;
+    td.num_threads           = 1;
+    td.pc                    = nullptr;
+    td.active_thread         = nullptr;
+    td.stage_input           = nullptr;
+    td.stage_output          = nullptr;
+    $
+
+    behavior
+        do
+            // -----------------------------------------------------------
+            // Step 1: acquire an instruction in `stage_input`.
+            //
+            // Non-fetch stages wait for their upstream stage to set
+            // stage_input->valid=true. The Fetch stage has no upstream,
+            // so instead it waits for stage_input to be FREE (valid=0),
+            // then writes the next thread's (thread_id, pc) into it and
+            // advances the round-robin selector and that thread's PC.
+            // -----------------------------------------------------------
+            if (id == 0) then
+                wait until (this_phase == 0 and $!td.stage_input->valid$);
+                $
+                int t = *td.active_thread;
+                td.stage_input->thread_id = t;
+                td.stage_input->pc        = td.pc[t];
+                td.stage_input->valid     = true;
+                td.pc[t]++;
+                *td.active_thread = (t + 1) % td.num_threads;
+                $;
+            else
+                wait until (this_phase == 0 and $td.stage_input->valid$);
+            end if;
+
+            // -----------------------------------------------------------
+            // Step 2: model the stage's processing time.
+            //
+            // During these DELAY cycles stage_input stays valid, so the
+            // logging branch in the parent sees this stage's currently
+            // working instruction.
+            // -----------------------------------------------------------
+            wait(DELAY, 0);
+
+            // -----------------------------------------------------------
+            // Step 3: commit to the next stage, or retire (last stage).
+            //
+            // Normal stages wait for the downstream input slot to be
+            // free (stage_output->valid==0), then copy the payload over
+            // and flip both valid bits: stage_output becomes valid,
+            // stage_input becomes free.
+            //
+            // The last stage has stage_output==nullptr; it just clears
+            // its own stage_input valid bit.
+            // -----------------------------------------------------------
+            if ($td.stage_output != nullptr$) then
+                wait until (this_phase == 0 and $!td.stage_output->valid$);
+                $
+                td.stage_output->thread_id = td.stage_input->thread_id;
+                td.stage_output->pc        = td.stage_input->pc;
+                td.stage_output->valid     = true;
+                td.stage_input->valid      = false;
+                $;
+            else
+                // Last stage: no downstream to forward to. Retire in
+                // place by clearing the valid bit on our own input.
+                wait until (this_phase == 0);
+                $ td.stage_input->valid = false; $;
+            end if;
+
+            // -----------------------------------------------------------
+            // Step 4: bookkeeping + stop check.
+            // -----------------------------------------------------------
+            $ total_instr_executed++; $;
+
+            if ($stop_when_total_executed >= 0 && total_instr_executed >= stop_when_total_executed$) then
+                $
+                log << endl << name
+                    << ": simulation stopped upon reaching stopping criteria, num executed="
+                    << total_instr_executed;
+                $;
+                stop simulation;
+            end if;
+        while (1) end do;
+    end behavior
+end procedure
+// --8<-- [end:stage]

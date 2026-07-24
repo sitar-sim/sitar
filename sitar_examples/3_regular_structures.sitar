@@ -1,0 +1,50 @@
+// Demonstrates: submodule_array, net_array, and for-loop connections.
+// A parameterized shift register structure with N stages.
+// Stage, Source, and Sink behaviors are stubs (nothing) to focus on structure.
+
+// --8<-- [start:model]
+module Top
+    submodule sr : ShiftRegister<4>    // 4-stage shift register
+end module
+
+module ShiftRegister
+    parameter int N = 2    // number of stages (default 2)
+
+    submodule         src      : Source
+    submodule         dst      : Sink
+    submodule_array   stage[N] : Stage    // array of N Stage instances
+    net_array         n[N+1]   : capacity 1    // N+1 nets connecting the chain
+
+    // connect source and sink to the ends of the chain
+    src.outp => n[0]
+    dst.inp  <= n[N]
+
+    // connect each stage to consecutive nets using a for loop
+    for i in 0 to (N-1)
+        stage[i].inp  <= n[i]
+        stage[i].outp => n[i+1]
+    end for
+end module
+
+module Stage
+    inport  inp
+    outport outp
+    behavior
+        nothing;
+    end behavior
+end module
+
+module Source
+    outport outp
+    behavior
+        nothing;
+    end behavior
+end module
+
+module Sink
+    inport inp
+    behavior
+        nothing;
+    end behavior
+end module
+// --8<-- [end:model]
