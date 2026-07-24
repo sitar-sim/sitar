@@ -27,15 +27,17 @@ jobs:
       # 3. Install documentation dependencies
       - name: Install docs dependencies
         run: |
-          pip install -r docs/requirements.txt
-          pip install -e ./sitar_pygments_lexer
+          pip install -r docs/docs_source/requirements.txt
+          pip install -e ./docs/sitar_pygments_lexer
 
       # 4. Build the static site
       - name: Build documentation
+        working-directory: docs
         run: mkdocs build
 
       # 5. Publish to gh-pages
       - name: Deploy documentation
+        working-directory: docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

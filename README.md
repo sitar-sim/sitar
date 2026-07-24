@@ -5,7 +5,7 @@ Sitar is a framework for modeling and parallel simulation of synchronous discret
 It consists of a custom modeling language and a lightweight, C++ based simulation kernel.
 #
 
-![sitar simulation rfamework](documentation/sitar.png?raw=true "sitar")
+![sitar simulation rfamework](docs/documentation/sitar.png?raw=true "sitar")
 
 
 ## Getting Started
@@ -33,7 +33,7 @@ It consists of a custom modeling language and a lightweight, C++ based simulatio
 ### This folder contains
 
 - `install.py`	-- Python script for installing Sitar
-- `documentation`	-- User manual and technical documentation
+- `docs`		-- Documentation: the MkDocs-based documentation site (source and generated), the user manual, publications, and slides. See `docs/README`
 - `examples`	-- Examples of sitar descriptions
 - `core`		-- C++ code that forms the simulation kernel
 - `translator`	-- Code and grammar for the sitar language translator
