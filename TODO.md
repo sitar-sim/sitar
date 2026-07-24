@@ -1,7 +1,11 @@
+# TODO.md
 
-Todo:
 
+## Next in Queue
+    - In docs/ improve the parallel execution section and explanations
+    - Dynamic procedures: add support, add examples, test, add documentation
 
+## Maybe, Not Important
 1.  Simplify the net and port interconnection syntax, current:
     ```
     sender.outp   => n_forward    // sender's outport writes to n_forward
@@ -32,18 +36,6 @@ Todo:
     child.outp =>> outp
     ```
 
-3. Logo
-
-4. Syntax highlighting and editor keymappings support for VSCODE, add to getting started in docs
-
-5.
-
-
-
-
-
-
-
-
+3. Syntax highlighting and editor keymappings support for VSCODE, add to getting started in docs
 
 
