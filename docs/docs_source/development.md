@@ -98,6 +98,7 @@ The `SConstruct` script reads a configuration file `sitar_scons_config.txt` plac
 | `ENABLE_LOGGING` | Compile-time enable/disable of all logging |
 | `OPTIMIZATION_LEVEL` | GCC `-O` level (0-3) |
 | `EXTRA_LIBS` | Extra libraries to link against, set via `sitar compile -l/--libs` |
+| `BUILD_DIR` | Directory to build object files into, set via `sitar compile -b/--build-dir`. Empty by default -- objects build in place, next to each source file |
 
 To use a custom main file - for example, to control simulation parameters programmatically or integrate with an external co-simulation framework - set `MAIN_FILE_NAME` to your own file and follow the pattern in `sitar_default_main.cpp`.
 

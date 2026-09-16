@@ -92,6 +92,14 @@ def sitar_compile(args):
 			extra_libs.extend([lib.strip() for lib in item.split(",") if lib.strip()])
 	fo.write(",".join(extra_libs)+"\n")
 
+	#eighth line is the build directory (empty string if not given).
+	#When set, every source root below (core/ and each -d directory)
+	#gets its own object-file subdirectory under it instead of
+	#compiling in place, next to its .cpp source. Empty by default --
+	#objects build in place, exactly as before this option existed.
+	#8
+	fo.write((args.BUILD_DIR or "")+"\n")
+
 
 	#Next is a list of directories containing user code
 	if not args.CODE_DIR:
@@ -111,7 +119,7 @@ def sitar_compile(args):
 		print("\n============================================================")
 		print("FAILURE: Compilation failed")
 		print("============================================================\n")
-		sys.exit()
+		sys.exit(1)
 	else:
 		print("\n============================================================")
 		print("SUCCESS: Generated Simulation Executable ", args.OUTPUT_FILE)
@@ -143,6 +151,7 @@ compile_parser.add_argument("-m", "--main_file", dest="MAIN_FILE", type=str, act
 help="Cpp file that instantiates the Top module and starts simulation (otherwise uses a default file <sitar folder>/Compiler/sitar_default_main.cpp)")
 compile_parser.add_argument('--cflags', dest="C_FLAGS", type=str, action='store', default="", help="Additional flags for the compile step only (passed to CCFLAGS, i.e. g++ -c). Does NOT affect linking -- use -l/--libs to link against extra libraries. If the value itself starts with '-', use the --cflags=VALUE form (e.g. --cflags=-O0) so it isn't mistaken for another option.")
 compile_parser.add_argument("-l", "--libs", dest="LIBS", type=str, action='append', help="Extra library to link against, without the -l prefix (e.g. -l quadmath). Can be repeated (-l quadmath -l gomp) and/or comma-separated (-l quadmath,gomp).")
+compile_parser.add_argument("-b", "--build-dir", dest="BUILD_DIR", type=str, action='store', default=None, help="Directory to build object files into, one subdirectory per source root (the sitar core library, plus each -d directory), instead of compiling in place next to each .cpp source. Not set by default -- objects build in place, exactly as before this option existed. Without it, object files (e.g. <sitar-install>/core/*.o) are shared and reused as-is by every subsequent `sitar compile` invocation on this machine for any project, regardless of whether that invocation's own flags (e.g. --logging/--no-logging) match, since scons's dependency tracking here only looks at whether the .cpp source changed, not whether CCFLAGS did -- a stale, differently-flagged .o can silently get linked in, producing an ODR violation (mismatched class layouts across translation units) rather than a build error. Pass a per-build directory (e.g. a config's own gitignored build/ folder) to make a build fully self-contained and immune to this.")
 
 
 compile_parser.add_argument('--openmp', dest="WITH_OPENMP", action='store_true', help="Compile with openMp support ")

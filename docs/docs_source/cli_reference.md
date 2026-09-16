@@ -47,7 +47,7 @@ Compiles the generated C++ (plus the Sitar kernel) into a standalone simulation 
 
 ```
 usage: sitar compile [-h] [-o OUTPUT_FILE] [-d CODE_DIR] [-m MAIN_FILE]
-                     [--cflags C_FLAGS] [-l LIBS] [--openmp]
+                     [--cflags C_FLAGS] [-l LIBS] [-b BUILD_DIR] [--openmp]
                      [--logging | --no-logging]
 ```
 
@@ -58,6 +58,7 @@ usage: sitar compile [-h] [-o OUTPUT_FILE] [-d CODE_DIR] [-m MAIN_FILE]
 | `-m FILE`, `--main_file FILE` | a custom `main.cpp` to instantiate `Top` and drive the simulation, replacing `compiler/sitar_default_main.cpp` |
 | `--cflags "..."` | extra flags for the **compile step only** (`CCFLAGS`, i.e. `g++ -c`). Does **not** affect linking |
 | `-l LIB`, `--libs LIB` | an extra library to **link** against, without the `-l` prefix (e.g. `-l quadmath`). Repeatable and/or comma-separated |
+| `-b DIR`, `--build-dir DIR` | directory to build object files into, instead of compiling each source in place next to its own `.cpp`. Not set by default |
 | `--openmp` | compile with OpenMP support for parallel simulation |
 | `--logging` / `--no-logging` | enable (default) or disable the `log` object and `-DSITAR_ENABLE_LOGGING` |
 
@@ -112,10 +113,16 @@ Build for parallel simulation with OpenMP, and disable logging for a faster run:
 sitar compile --openmp --no-logging
 ```
 
+Keep every object file this build produces inside a build directory, rather than next to its own source:
+
+```bash
+sitar compile -b build/
+```
+
 Combine several options together (note `-d Output/` must be listed explicitly alongside any other `-d`, since specifying `-d` at all replaces the implicit default of `./Output`):
 
 ```bash
-sitar compile -o my_sim -d Output/ -d ./ --cflags="-O0" -l quadmath --openmp
+sitar compile -o my_sim -d Output/ -d ./ --cflags="-O0" -l quadmath --openmp -b build/
 ```
 
 ---

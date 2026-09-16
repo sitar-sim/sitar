@@ -53,6 +53,11 @@ if additional_flags:
 extra_libs_line=DIRS.pop(0)
 EXTRA_LIBS=[lib.strip() for lib in extra_libs_line.split(",") if lib.strip()]
 
+#eighth line is the build directory (`sitar compile -b/--build-dir`),
+#empty string if not given. See BUILD_DIR's own use below for what
+#this changes.
+BUILD_DIR=DIRS.pop(0)
+
 
 
 #Check if sitar_Top.h exists
@@ -75,15 +80,66 @@ if not (any ("Top.h" in s for s in sitar_files)):
 
 
 #Source files
-Source=[ MAIN_FILE_NAME,			 	#main.cpp
-	Glob(SITAR_INSTALLATION_DIR+"core/*.cpp")]      #sitar core files
+#
+#When BUILD_DIR is set, every source root below (the sitar core
+#library, plus each -d directory) gets its own object-file
+#subdirectory under it, via scons's VariantDir (duplicate=0, so
+#sources are never physically copied -- only where the resulting .o
+#lands changes). Without it, an object file compiles in place, next to
+#its own .cpp -- e.g. <SITAR_INSTALLATION_DIR>core/*.o -- shared and
+#reused as-is by every subsequent `sitar compile` invocation on this
+#machine, for any project, regardless of whether that invocation's own
+#flags (e.g. --logging/--no-logging) match: scons's dependency
+#tracking here only looks at whether the .cpp source changed, not
+#whether CCFLAGS did, so a stale, differently-flagged .o can silently
+#get linked in -- a real ODR violation (mismatched class layouts
+#across translation units, since e.g. sitar::logger's own member
+#layout differs by SITAR_ENABLE_LOGGING), not a build error.
+#
+#CPPPATH always points at the *real* source directories regardless --
+#duplicate=0 means headers are never copied into the build dir either,
+#only .o output is remapped.
+core_dir = SITAR_INSTALLATION_DIR+"core"
 
-for item in DIRS:  
-	Source.append(Glob(item+"/*.cpp"))
+def variant_glob_root(index, original_dir):
+	#Stable, collision-proof per-source-root build subdirectory name:
+	#the index prefix guarantees uniqueness even if two -d directories
+	#happen to share a basename; the basename itself is just for
+	#readability in scons's own build-output messages.
+	name = os.path.basename(original_dir.rstrip('/')) or "dir"
+	return os.path.join(BUILD_DIR, "%d_%s" % (index, name))
 
-#paths to header files
-Cpppath=[SITAR_INSTALLATION_DIR+"core/"]
-for item in DIRS: 
+if BUILD_DIR:
+	core_glob_root = os.path.join(BUILD_DIR, "core")
+	VariantDir(core_glob_root, core_dir, duplicate=0)
+else:
+	core_glob_root = core_dir
+
+#The main file (-m/--main_file) is a single file, not a whole
+#directory of sources like core/ and each -d below, but its .o needs
+#the same build-dir treatment for the same reason -- otherwise it's
+#the one object file still compiling in place, right next to whatever
+#.cpp the caller pointed -m at.
+if BUILD_DIR:
+	main_dir  = os.path.dirname(MAIN_FILE_NAME) or "."
+	main_root = os.path.join(BUILD_DIR, "main")
+	VariantDir(main_root, main_dir, duplicate=0)
+	main_file_source = os.path.join(main_root, os.path.basename(MAIN_FILE_NAME))
+else:
+	main_file_source = MAIN_FILE_NAME
+
+Source=[ main_file_source,			 	#main.cpp
+	Glob(core_glob_root+"/*.cpp")]      #sitar core files
+
+Cpppath=[core_dir+"/"]
+
+for i, item in enumerate(DIRS):
+	if BUILD_DIR:
+		glob_root = variant_glob_root(i, item)
+		VariantDir(glob_root, item, duplicate=0)
+	else:
+		glob_root = item
+	Source.append(Glob(glob_root+"/*.cpp"))
 	Cpppath.append(item+"/")
 
 
@@ -182,18 +238,27 @@ if ("DGENERATE_SHARED_LIBRARY_ONLY" in additional_flags):
 		)
 
 #Always generate an executable
-env.Program(
+#
+#Default(...) below: without it, scons's own no-explicit-target default
+#build set can fail to include this program at all when TARGET_NAME
+#and/or a VariantDir'd source root lives outside the invocation's own
+#directory tree (as they typically do here -- both are usually
+#absolute paths elsewhere on disk), silently reporting "`.' is up to
+#date" and building nothing rather than an error. Explicit beats
+#implicit here.
+program = env.Program(
 		#executable name
 		target=TARGET_NAME,
-		
+
 		#Source files
 		source=Source,
 
 		#paths to header files
 		CPPPATH=Cpppath,
 
-		#libraries to link with 
+		#libraries to link with
 		LIBS=Libs,
 		LIBPATH=Libpath
 		)
+Default(program)
 
