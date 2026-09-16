@@ -1,0 +1,57 @@
+// Demonstrates: wait(c,p), bare wait, wait until (condition),
+// and the idiomatic wait until (this_phase==...) phase-discipline pattern.
+//
+// Time arithmetic: wait(c,p) adds time(c,p) to current_time.
+// time(c,p) encodes as (c<<1)|p, so addition carries phase into cycles.
+// Examples from the trace below:
+//   wait(2,0) from (0,0): 0 + 4 = 4  -> (2,0)
+//   wait      from (2,0): 4 + 1 = 5  -> (2,1)   [bare wait = wait(0,1)]
+//   wait(3,1) from (2,1): 5 + 7 = 12 -> (6,0)
+//
+// Expected output:
+// (0,0)TOP.m      :start:                   time=(0,0)
+// (2,0)TOP.m      :after wait(2,0):         time=(2,0)
+// (2,1)TOP.m      :after wait:              time=(2,1)
+// (6,0)TOP.m      :after wait(3,1):         time=(6,0)
+// (6,0)TOP.m      :after wait until ph==0:  time=(6,0)
+// (10,0)TOP.m     :after wait until cy>=10: time=(10,0)
+// Simulation stopped at time (10,0)
+
+// --8<-- [start:model]
+module Top
+    submodule m : WaitForms
+end module
+
+module WaitForms
+    behavior
+
+        $log << endl << "start:                   time=" << current_time;$;
+
+        // wait(c, p): suspend for c cycles and p phases
+        wait(2, 0);
+        $log << endl << "after wait(2,0):         time=" << current_time;$;
+
+        // bare wait: shorthand for wait(0,1) - advance exactly one phase
+        wait;
+        $log << endl << "after wait:              time=" << current_time;$;
+
+        // wait(c, p) with both c and p non-zero
+        wait(3, 1);
+        $log << endl << "after wait(3,1):         time=" << current_time;$;
+
+        // wait until (expr): condition is checked immediately on each nudge.
+        // If already true when reached, execution continues without suspending.
+        wait until (this_phase == 0);
+        $log << endl << "after wait until ph==0:  time=" << current_time;$;
+
+        // Phase-discipline pattern: wait for phase 1 to push tokens to nets
+        // wait until (this_phase == 1);
+
+        // wait until a specific cycle
+        wait until (this_cycle >= 10);
+        $log << endl << "after wait until cy>=10: time=" << current_time;$;
+
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:model]

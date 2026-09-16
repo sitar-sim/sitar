@@ -1,0 +1,37 @@
+// --8<-- [start:model]
+// A system with two modules connected by two nets,
+// forming a bidirectional communication channel.
+
+module Top
+    submodule sys : System
+end module
+
+module System
+    submodule sender   : Sender
+    submodule receiver : Receiver
+
+    net n_forward : capacity 4   // sender -> receiver
+    net n_back    : capacity 4   // receiver -> sender
+
+    sender.outp   => n_forward
+    receiver.inp  <= n_forward
+    receiver.outp => n_back
+    sender.inp    <= n_back
+end module
+
+module Sender
+    outport outp
+    inport  inp
+    behavior
+        $log<<endl<<"Sender running.";$;
+    end behavior
+end module
+
+module Receiver
+    inport  inp
+    outport outp
+    behavior
+        $log<<endl<<"Receiver running.";$;
+    end behavior
+end module
+// --8<-- [end:model]

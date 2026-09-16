@@ -1,0 +1,73 @@
+// Demonstrates: net and port declarations with and without width,
+// both connection syntax forms (=> and <=), and that the token pushed
+// must match the declared port/net width.
+//
+// Source sends one zero-width signal token and one 4-byte data token.
+// Sink pulls both and logs the data value, showing that token<0> is
+// used for signal nets and token<4> for width-4 nets.
+//
+// Expected output:
+// (1,0) TOP.sys.snk : received signal
+// (1,0) TOP.sys.snk : received data = 42
+
+// --8<-- [start:model]
+module Top
+    submodule sys : System
+end module
+
+module System
+    submodule src : Source
+    submodule snk : Sink
+
+    net signal          : capacity 4           // zero-width net (no payload)
+    net data            : capacity 4 width 4   // 4-byte net
+
+    // outport => net syntax
+    src.sig_out  => signal
+    src.dat_out  => data
+
+    // inport <= net syntax
+    snk.sig_in   <= signal
+    snk.dat_in   <= data
+end module
+
+module Source
+    outport sig_out              // zero-width outport (matches zero-width net)
+    outport dat_out : width 4   // 4-byte outport (matches width-4 net)
+
+    behavior
+        // Phase 1: push a zero-width signal token and a 4-byte data token.
+        // token<N> width N must equal the port's declared width.
+        wait until (this_phase == 1);
+        $
+        token<0> sig;                    // zero-width token for signal net
+        token<4> dat;
+        int val = 42;
+        sitar::pack(dat, val);           // pack int into 4-byte token
+        sig_out.push(sig);
+        dat_out.push(dat);
+        $;
+    end behavior
+end module
+
+module Sink
+    inport sig_in              // zero-width inport
+    inport dat_in  : width 4   // 4-byte inport
+
+    behavior
+        // Phase 0 of next cycle: pull both tokens.
+        wait until (this_phase == 0 and this_cycle >= 1);
+        $
+        token<0> sig;
+        token<4> dat;
+        int val;
+        if (sig_in.pull(sig))
+            log << endl << "received signal";
+        if (dat_in.pull(dat)) {
+            sitar::unpack(dat, val);
+            log << endl << "received data = " << val;
+        }
+        $;
+    end behavior
+end module
+// --8<-- [end:model]

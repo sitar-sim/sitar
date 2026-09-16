@@ -1,0 +1,68 @@
+// Demonstrates: do-while loop, infinite loop with stop simulation,
+// and the iteration limit (zero-delay infinite loop error).
+//
+// Expected output (basic example):
+// (0,0)TOP.m      :n=5
+// (1,0)TOP.m      :n=4
+// (2,0)TOP.m      :n=3
+// (3,0)TOP.m      :n=2
+// (4,0)TOP.m      :n=1
+// (5,0)TOP.m      :done.
+// Simulation stopped at time (5,0)
+
+// --8<-- [start:basic]
+module Top
+    submodule m : Countdown
+end module
+
+module Countdown
+    decl $int n;$
+    init $n = 5;$
+    behavior
+        // loop body always executes at least once before the condition is checked
+        do
+            $log << endl << "n=" << n;$;
+            $n = n - 1;$;
+            wait(1, 0);
+        while (n > 0) end do;
+        $log << endl << "done.";$;
+        stop simulation;
+    end behavior
+end module
+// --8<-- [end:basic]
+
+
+// --8<-- [start:infinite_loop]
+// Infinite loop idiom: while(1) end do combined with stop simulation or stop behavior
+module InfiniteLoop
+    decl $int count;$
+    init $count = 0;$
+    behavior
+        do
+            $
+            count = count + 1;
+            log << endl << "count=" << count;
+            $;
+            wait(1, 0);
+            if (count >= 3) then
+                stop simulation;
+            end if;
+        while (1) end do;
+    end behavior
+end module
+// --8<-- [end:infinite_loop]
+
+
+// --8<-- [start:iteration_limit]
+// WARNING: a do-while body with no wait statement will exceed the iteration limit.
+// The simulator enforces a maximum number of instantaneous iterations per phase
+// to detect non-terminating zero-delay loops. This module will raise an error.
+module IterationLimitError
+behavior
+    do
+        $log << endl << "spinning...";$;
+        // No wait here: the loop never converges; the kernel raises an error.
+    while (1) end do;
+end behavior
+end module
+// --8<-- [end:iteration_limit]

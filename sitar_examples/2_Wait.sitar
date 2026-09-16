@@ -1,0 +1,29 @@
+
+//Wait statements
+
+module Top
+	//wait
+	submodule a : Wait 
+end module
+
+module Wait
+		
+	behavior
+	$cout<<"\n time = "<<current_time;$;
+	wait; //wait for one phase. Same as wait (0,1).
+	$cout<<"\n time = "<<current_time;$;
+	
+	wait(2,0); //wait two cycles
+	$cout<<"\n time = "<<current_time;$;
+	
+	wait(3,1); //wait 3 cycles and one phase
+	$cout<<"\n time = "<<current_time;$;
+	
+	wait until (current_time==time(10,0));
+	//wait until expression evaluates to true
+	 $cout<<"\n time = "<<current_time;$;
+	end behavior
+end module
+
+
+

@@ -1,0 +1,119 @@
+// Demonstrates: basic logging, hierarchy info in logs,
+// multiple loggers with file output, custom prefix, and enable/disable control.
+
+module Top
+    submodule basic   : BasicLogging
+    submodule multi   : MultiLogger
+    submodule prefix  : PrefixLogging
+    submodule control : LogControl
+end module
+
+
+// --8<-- [start:basic]
+module BasicLogging
+behavior
+    $
+    // endl inserts a newline and the default prefix: (time) full-name :
+    log << endl << "Hello from " << hierarchicalId();
+
+    // Without endl, output continues on the same line with no new prefix
+    log << " -- still on the same line";
+
+    // Module info in log output
+    log << endl << "instance : " << instanceId();
+    log << endl << "full name: " << hierarchicalId();
+    log << endl << "parent   : " << parent()->instanceId();
+    log << endl << "time     : " << current_time;
+    $;
+end behavior
+end module
+// --8<-- [end:basic]
+
+
+// --8<-- [start:token_info]
+module TokenInfoLog
+behavior
+    $
+    token<4> t;
+    int val = 42;
+    sitar::pack(t, val);
+    log << endl << "token: " << t.info();
+    // prints: token: (type=0, ID=0, payload=0x2a 00 00 00 )
+    $;
+end behavior
+end module
+// --8<-- [end:token_info]
+
+
+// --8<-- [start:multiple_loggers]
+module MultiLogger
+behavior
+    // Declare an additional logger and a file stream
+    decl $logger log2; std::ofstream logfile;$;
+
+    $
+    logfile.open("log_" + hierarchicalId() + ".txt", std::ofstream::out);
+    log2.setOstream(&logfile);
+    $;
+
+    $log  << endl << "1. This line goes to stdout (default stream)";$;
+    $log2 << endl << "2. This line goes to the log file";$;
+
+    // Redirect the default log to the file
+    $
+    log.setOstream(&logfile);
+    log << endl << "3. Now the default log also goes to the file";
+    $;
+
+    // Reset to default stream (stdout)
+    $
+    log.setOstream(logger::default_logstream);
+    log << endl << "4. Reset: back to stdout";
+    $;
+end behavior
+end module
+// --8<-- [end:multiple_loggers]
+
+
+// --8<-- [start:prefix]
+module PrefixLogging
+behavior
+    $log << endl << "1. Default prefix (time + full name)";$;
+
+    // Disable the default prefix and use a custom one
+    $
+    log.useDefaultPrefix = false;
+    log.setPrefix("CUSTOM: ");
+    log << endl << "2. Custom prefix, no time printed";
+    $;
+
+    // To include time in a custom prefix, set it each cycle:
+    do
+        $
+        log.setPrefix(current_time.toString() + " CUSTOM: ");
+        log << endl << "3. Custom prefix with time: cycle=" << this_cycle;
+        $;
+        wait(1, 0);
+    while (this_cycle < 3) end do;
+
+    // Restore the default prefix (takes effect after the next wait)
+    $log.useDefaultPrefix = true;$;
+    wait;
+    $log << endl << "4. Default prefix restored";$;
+end behavior
+end module
+// --8<-- [end:prefix]
+
+
+// --8<-- [start:control]
+module LogControl
+behavior
+    $
+    log.turnOFF();
+    log << endl << "This will NOT appear";
+    log.turnON();
+    log << endl << "This WILL appear";
+    $;
+end behavior
+end module
+// --8<-- [end:control]

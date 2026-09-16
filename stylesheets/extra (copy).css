@@ -1,0 +1,30 @@
+/* Vim-like light syntax overrides for Sitar */
+
+
+/* Make embedded $...$ blocks prominent with a background 
+ * for embedded $...$ raw C++ code */
+.md-typeset code .g,
+.md-typeset pre code .g {
+  color: var(--md-code-hl-generic-color);
+  opacity: 1;
+  font-style: normal;
+  background-color: rgba(106, 13, 173, 0.08); /* soft purple tint */
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+}
+
+:root > * {
+  --md-code-hl-keyword-color:    #0000aa; /* blue – Sitar keywords */
+  --md-code-hl-generic-color:    #000000; /* 5900b3;  purple – $...$ code blocks */
+  --md-code-hl-comment-color:    #008000; /* green – // comments */
+  --md-code-hl-string-color:     #a31515; /* red – string literals */
+
+  --md-code-hl-constant-color:   #0000aa; /* blue – logical constants */
+  --md-code-hl-special-color:    #2b91af; /* teal – ports, nets, types */
+  --md-code-hl-name-color:       #000000; /* black – identifiers */
+
+  --md-code-hl-operator-color:   #000000; /* black – operators */
+  --md-code-hl-punctuation-color:#000000; /* black – punctuation */
+}
+
+
